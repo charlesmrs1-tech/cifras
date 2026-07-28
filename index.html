@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#10130f">
+    <title>Cifras Charles</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="styles.css?v=2">
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <header class="topbar">
+        <button class="icon-button" id="backButton" aria-label="Voltar" title="Voltar">
+          <span aria-hidden="true">‹</span>
+        </button>
+        <div class="brand">
+          <strong>Cifras</strong>
+          <span id="screenHint">Biblioteca</span>
+        </div>
+        <div class="top-actions">
+          <button class="icon-button" id="searchButton" aria-label="Pesquisar música" title="Pesquisar">⌕</button>
+          <button class="icon-button" id="fullscreenButton" aria-label="Tela cheia" title="Tela cheia">⛶</button>
+        </div>
+      </header>
+
+      <main>
+        <section id="homeScreen" class="screen active">
+          <div class="toolbar-row">
+            <label class="search-field">
+              <span>⌕</span>
+              <input id="quickSearch" type="search" placeholder="Pesquisar por nome da música">
+            </label>
+            <button class="primary-button" id="newSongButton">Nova música</button>
+          </div>
+
+          <div class="tabs" role="tablist" aria-label="Visões">
+            <button class="tab active" data-tab="songs" role="tab">Músicas</button>
+            <button class="tab" data-tab="sets" role="tab">Sequências</button>
+          </div>
+
+          <div id="songsPanel" class="panel active">
+            <div id="songList" class="song-list"></div>
+          </div>
+
+          <div id="setsPanel" class="panel">
+            <div class="set-header">
+              <h1>Sequências</h1>
+              <button class="primary-button" id="newSetButton">Criar sequência</button>
+            </div>
+            <div id="setList" class="set-list"></div>
+          </div>
+        </section>
+
+        <section id="readerScreen" class="screen reader-screen" aria-live="polite">
+          <div class="reader-tools">
+            <button class="tool-button" id="prevSongButton" title="Música anterior">&lt;</button>
+            <button class="tool-button" id="fontDownButton" title="Diminuir letra">A-</button>
+            <button class="tool-button" id="fontUpButton" title="Aumentar letra">A+</button>
+            <button class="tool-button" id="scrollToggleButton" title="Ligar ou pausar autorrolagem">Rolar</button>
+            <button class="tool-button" id="scrollSlowerButton" title="Diminuir velocidade">-</button>
+            <output class="speed-display" id="scrollSpeedDisplay" aria-label="Velocidade da autorrolagem">1x</output>
+            <button class="tool-button" id="scrollFasterButton" title="Aumentar velocidade">+</button>
+            <button class="tool-button" id="editSongButton" title="Editar música">Editar</button>
+            <button class="tool-button" id="nextSongButton" title="Próxima música">&gt;</button>
+          </div>
+          <article class="song-reader">
+            <h1 id="readerTitle"></h1>
+            <div id="readerMeta" class="reader-meta"></div>
+            <pre id="readerContent" class="reader-content"></pre>
+          </article>
+        </section>
+      </main>
+
+      <button class="floating-search" id="floatingSearchButton" aria-label="Pesquisar">⌕</button>
+    </div>
+
+    <dialog id="searchDialog" class="modal">
+      <form method="dialog" class="modal-body">
+        <div class="modal-title">
+          <h2>Pesquisar música</h2>
+          <button class="icon-button" value="cancel" aria-label="Fechar">×</button>
+        </div>
+        <input id="modalSearchInput" class="modal-input" type="search" placeholder="Digite o nome">
+        <div id="modalSearchResults" class="modal-results"></div>
+      </form>
+    </dialog>
+
+    <dialog id="songDialog" class="modal wide">
+      <form method="dialog" class="modal-body" id="songForm">
+        <div class="modal-title">
+          <h2 id="songDialogTitle">Nova música</h2>
+          <button class="icon-button" value="cancel" aria-label="Fechar">×</button>
+        </div>
+        <label>Título <input id="songTitleInput" required></label>
+        <label>Estilo <input id="songStyleInput" placeholder="Sertanejo animado, moda, rock..."></label>
+        <label>Cifra e letra <textarea id="songContentInput" required spellcheck="false"></textarea></label>
+        <div class="form-actions">
+          <button type="button" class="danger-button" id="deleteSongButton">Excluir</button>
+          <button class="primary-button" value="default">Salvar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="setDialog" class="modal wide">
+      <form method="dialog" class="modal-body" id="setForm">
+        <div class="modal-title">
+          <h2>Criar sequência</h2>
+          <button class="icon-button" value="cancel" aria-label="Fechar">×</button>
+        </div>
+        <label>Nome da sequência <input id="setNameInput" required placeholder="Ex.: Sertanejo animadas"></label>
+        <div id="setSongChoices" class="choice-list"></div>
+        <div class="form-actions">
+          <button class="primary-button" value="default">Salvar sequência</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="app.js?v=2"></script>
+  </body>
+</html>
