@@ -153,14 +153,28 @@ function setupCloudSync() {
   const repRef = window.db.ref("repertoire");
   repRef.on("value", snapshot => {
     const remoteData = snapshot.val();
-    if (remoteData) {
-      if (Array.isArray(remoteData.songs)) state.songs = remoteData.songs;
+    if (remoteData && Array.isArray(remoteData.songs) && remoteData.songs.length > 0) {
+      // Mescla músicas cadastradas localmente que ainda não estejam na nuvem
+      const remoteIds = new Set(remoteData.songs.map(s => s.id));
+      const localOnlySongs = (state.songs || []).filter(s => s && s.id && !remoteIds.has(s.id));
+      
+      if (localOnlySongs.length > 0) {
+        const mergedSongs = [...remoteData.songs, ...localOnlySongs];
+        remoteData.songs = mergedSongs;
+        window.db.ref("repertoire").set({
+          songs: mergedSongs,
+          sets: remoteData.sets || state.sets,
+          updatedAt: new Date().toISOString()
+        });
+      }
+
+      state.songs = remoteData.songs;
       if (Array.isArray(remoteData.sets)) state.sets = remoteData.sets;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       renderHome();
       updateSyncStatus("🟢 Nuvem sincronizada", "online");
     } else {
-      // Se a nuvem estiver vazia, sobe a biblioteca local inicial
+      // Se o banco na nuvem estiver vazio, sobe todo o repertório local
       saveState();
     }
   }, error => {

@@ -8,8 +8,8 @@ const firebaseConfig = {
   storageBucket: "musicas-5ee55.appspot.com"
 };
 
-let db = null;
-let firebaseInitialized = false;
+window.db = null;
+window.firebaseInitialized = false;
 
 function initFirebase() {
   if (typeof firebase === "undefined") {
@@ -26,8 +26,8 @@ function initFirebase() {
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
-    db = firebase.database();
-    firebaseInitialized = true;
+    window.db = firebase.database();
+    window.firebaseInitialized = true;
     return true;
   } catch (err) {
     console.error("Erro ao inicializar Firebase:", err);

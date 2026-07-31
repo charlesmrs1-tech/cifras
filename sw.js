@@ -1,5 +1,5 @@
-const CACHE_NAME = "cifras-charles-v3";
-const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest"];
+const CACHE_NAME = "cifras-charles-v4";
+const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./firebase-config.js", "./manifest.webmanifest"];
 
 self.addEventListener("install", event => {
   self.skipWaiting();
@@ -15,5 +15,17 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("fetch", event => {
-  event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
+  if (event.request.method !== "GET") return;
+  // Estratégia Network-First para garantir que celulares busquem o código mais recente da Vercel
+  event.respondWith(
+    fetch(event.request)
+      .then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200 && event.request.url.startsWith(self.location.origin)) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(event.request))
+  );
 });
