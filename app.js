@@ -63,6 +63,7 @@ let lastScrollTime = 0;
 let lastTouchWasPinch = false;
 
 const el = {
+  syncBadge: document.querySelector("#syncBadge"),
   backButton: document.querySelector("#backButton"),
   screenHint: document.querySelector("#screenHint"),
   searchButton: document.querySelector("#searchButton"),
@@ -89,6 +90,9 @@ const el = {
   scrollSpeedDisplay: document.querySelector("#scrollSpeedDisplay"),
   editSongButton: document.querySelector("#editSongButton"),
   newSongButton: document.querySelector("#newSongButton"),
+  importButton: document.querySelector("#importButton"),
+  exportButton: document.querySelector("#exportButton"),
+  importFileInput: document.querySelector("#importFileInput"),
   newSetButton: document.querySelector("#newSetButton"),
   searchDialog: document.querySelector("#searchDialog"),
   modalSearchInput: document.querySelector("#modalSearchInput"),
@@ -106,6 +110,12 @@ const el = {
   setSongChoices: document.querySelector("#setSongChoices")
 };
 
+function updateSyncStatus(text, statusClass = "") {
+  if (!el.syncBadge) return;
+  el.syncBadge.textContent = text;
+  el.syncBadge.className = `sync-badge ${statusClass}`;
+}
+
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) return JSON.parse(saved);
@@ -117,6 +127,46 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (window.firebaseInitialized && window.db) {
+    window.db.ref("repertoire").set({
+      songs: state.songs,
+      sets: state.sets,
+      updatedAt: new Date().toISOString()
+    }).then(() => {
+      updateSyncStatus("🟢 Nuvem ativa", "online");
+    }).catch(err => {
+      console.error("Erro ao salvar no Firebase:", err);
+      updateSyncStatus("🟡 Modo local", "offline");
+    });
+  }
+}
+
+function setupCloudSync() {
+  const isCloudReady = typeof initFirebase === "function" && initFirebase();
+  if (!isCloudReady) {
+    updateSyncStatus("💾 Modo local (sem nuvem)", "offline");
+    return;
+  }
+
+  updateSyncStatus("⚡ Conectando...", "");
+  
+  const repRef = window.db.ref("repertoire");
+  repRef.on("value", snapshot => {
+    const remoteData = snapshot.val();
+    if (remoteData) {
+      if (Array.isArray(remoteData.songs)) state.songs = remoteData.songs;
+      if (Array.isArray(remoteData.sets)) state.sets = remoteData.sets;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderHome();
+      updateSyncStatus("🟢 Nuvem sincronizada", "online");
+    } else {
+      // Se a nuvem estiver vazia, sobe a biblioteca local inicial
+      saveState();
+    }
+  }, error => {
+    console.error("Erro na escuta do Firebase:", error);
+    updateSyncStatus("🟡 Erro de conexão (Modo local)", "offline");
+  });
 }
 
 function normalize(value) {
@@ -361,6 +411,92 @@ function saveSet() {
   renderHome();
 }
 
+function exportRepertoire() {
+  const data = {
+    app: "cifras-charles",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    songs: state.songs,
+    sets: state.sets
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const date = new Date().toISOString().slice(0, 10);
+
+  link.href = url;
+  link.download = `repertorio-cifras-${date}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function sanitizeImportedRepertoire(data) {
+  if (!data || !Array.isArray(data.songs)) {
+    throw new Error("Arquivo de repertorio invalido.");
+  }
+
+  const usedIds = new Set();
+  const songs = data.songs.map(song => {
+    const id = typeof song.id === "string" && song.id.trim() && !usedIds.has(song.id)
+      ? song.id
+      : crypto.randomUUID();
+    usedIds.add(id);
+
+    return {
+      id,
+      title: String(song.title || "").trim(),
+      style: String(song.style || "").trim(),
+      content: String(song.content || "").trim()
+    };
+  }).filter(song => song.title && song.content);
+
+  if (!songs.length) {
+    throw new Error("O arquivo nao tem musicas validas.");
+  }
+
+  const songIds = new Set(songs.map(song => song.id));
+  const sets = Array.isArray(data.sets) ? data.sets.map(set => ({
+    id: typeof set.id === "string" && set.id.trim() ? set.id : crypto.randomUUID(),
+    name: String(set.name || "").trim(),
+    songIds: Array.isArray(set.songIds) ? set.songIds.filter(id => songIds.has(id)) : []
+  })).filter(set => set.name && set.songIds.length) : [];
+
+  return {
+    ...state,
+    songs,
+    sets
+  };
+}
+
+function importRepertoireFile(file) {
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    try {
+      const imported = sanitizeImportedRepertoire(JSON.parse(reader.result));
+      const ok = confirm("Importar este arquivo vai substituir as musicas e sequencias salvas neste aparelho. Deseja continuar?");
+      if (!ok) return;
+
+      stopAutoScroll();
+      state = imported;
+      currentSongId = null;
+      currentQueue = [];
+      saveState();
+      closeReader();
+      renderHome();
+      alert("Repertorio importado com sucesso.");
+    } catch (error) {
+      alert(error.message || "Nao foi possivel importar este arquivo.");
+    } finally {
+      el.importFileInput.value = "";
+    }
+  });
+  reader.readAsText(file);
+}
+
 el.quickSearch.addEventListener("input", renderSongs);
 el.searchButton.addEventListener("click", openSearch);
 el.floatingSearchButton.addEventListener("click", openSearch);
@@ -405,6 +541,9 @@ el.scrollSlowerButton.addEventListener("click", () => changeScrollSpeed(-1));
 el.scrollFasterButton.addEventListener("click", () => changeScrollSpeed(1));
 el.editSongButton.addEventListener("click", () => openSongEditor(currentSongId));
 el.newSongButton.addEventListener("click", () => openSongEditor());
+el.exportButton.addEventListener("click", exportRepertoire);
+el.importButton.addEventListener("click", () => el.importFileInput.click());
+el.importFileInput.addEventListener("change", event => importRepertoireFile(event.target.files?.[0]));
 el.newSetButton.addEventListener("click", openSetEditor);
 el.songForm.addEventListener("submit", saveSong);
 el.setForm.addEventListener("submit", saveSet);
@@ -459,4 +598,5 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("sw.js");
 }
 
+setupCloudSync();
 renderHome();

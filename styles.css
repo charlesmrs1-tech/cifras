@@ -73,6 +73,24 @@ textarea {
   white-space: nowrap;
 }
 
+.sync-badge {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.3s ease;
+}
+
+.sync-badge.online {
+  color: #4cd964;
+}
+
+.sync-badge.offline {
+  color: #ff9500;
+}
+
 .top-actions {
   display: flex;
   gap: 8px;
@@ -106,6 +124,13 @@ textarea {
   align-items: center;
 }
 
+.library-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .search-field {
   display: grid;
   grid-template-columns: 34px 1fr;
@@ -136,6 +161,7 @@ label textarea {
 }
 
 .primary-button,
+.secondary-button,
 .danger-button {
   min-height: 44px;
   border: 0;
@@ -144,6 +170,12 @@ label textarea {
   background: var(--accent);
   color: #15130b;
   font-weight: 700;
+}
+
+.secondary-button {
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text);
 }
 
 .danger-button {
@@ -398,6 +430,16 @@ label {
   .toolbar-row,
   .set-header {
     grid-template-columns: 1fr;
+  }
+
+  .library-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    justify-content: stretch;
+  }
+
+  .library-actions button {
+    padding: 0 8px;
   }
 
   .reader-tools {
