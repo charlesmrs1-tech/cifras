@@ -90,6 +90,7 @@ const el = {
   scrollFasterButton: document.querySelector("#scrollFasterButton"),
   scrollSpeedDisplay: document.querySelector("#scrollSpeedDisplay"),
   editSongButton: document.querySelector("#editSongButton"),
+  directDeleteSongButton: document.querySelector("#directDeleteSongButton"),
   newSongButton: document.querySelector("#newSongButton"),
   importButton: document.querySelector("#importButton"),
   exportButton: document.querySelector("#exportButton"),
@@ -426,35 +427,24 @@ function saveSong(event) {
   if (editingSongId === currentSongId) openReader(editingSongId, currentQueue);
 }
 
-function deleteSong(event) {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-  if (!editingSongId) return;
+function deleteSongByIdOrTitle(targetId) {
+  if (!targetId) return false;
 
-  const song = state.songs.find(s => s.id === editingSongId);
+  const song = state.songs.find(s => s.id === targetId);
   const songTitle = song ? song.title : "esta música";
   const titleKey = song ? normalize(song.title) : "";
 
-  if (!confirm(`Tem certeza que deseja excluir "${songTitle}"?`)) return;
-
-  const idToDelete = editingSongId;
-  editingSongId = null;
-
-  el.songTitleInput.value = "";
-  el.songStyleInput.value = "";
-  el.songContentInput.value = "";
+  if (!confirm(`Tem certeza que deseja excluir "${songTitle}"?`)) return false;
 
   const remainingSongs = state.songs.filter(s => {
-    if (s.id === idToDelete) return false;
+    if (s.id === targetId) return false;
     if (titleKey && normalize(s.title) === titleKey) return false;
     return true;
   });
 
   const deletedIds = new Set(
     state.songs
-      .filter(s => s.id === idToDelete || (titleKey && normalize(s.title) === titleKey))
+      .filter(s => s.id === targetId || (titleKey && normalize(s.title) === titleKey))
       .map(s => s.id)
   );
 
@@ -463,11 +453,29 @@ function deleteSong(event) {
     ...set,
     songIds: set.songIds.filter(id => !deletedIds.has(id))
   }));
-  
+
   saveState();
   if (el.songDialog.open) el.songDialog.close();
   if (currentSongId && deletedIds.has(currentSongId)) closeReader();
   renderHome();
+  return true;
+}
+
+function deleteSong(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  if (!editingSongId) return;
+
+  const idToDelete = editingSongId;
+  editingSongId = null;
+
+  el.songTitleInput.value = "";
+  el.songStyleInput.value = "";
+  el.songContentInput.value = "";
+
+  deleteSongByIdOrTitle(idToDelete);
 }
 
 function openSetEditor() {
@@ -621,6 +629,7 @@ el.scrollToggleButton.addEventListener("click", toggleAutoScroll);
 el.scrollSlowerButton.addEventListener("click", () => changeScrollSpeed(-1));
 el.scrollFasterButton.addEventListener("click", () => changeScrollSpeed(1));
 el.editSongButton.addEventListener("click", () => openSongEditor(currentSongId));
+el.directDeleteSongButton.addEventListener("click", () => deleteSongByIdOrTitle(currentSongId));
 el.newSongButton.addEventListener("click", () => openSongEditor());
 el.exportButton.addEventListener("click", exportRepertoire);
 el.importButton.addEventListener("click", () => el.importFileInput.click());
