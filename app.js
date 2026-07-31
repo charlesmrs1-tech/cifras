@@ -174,12 +174,13 @@ function setupCloudSync() {
   const repRef = window.db.ref("repertoire");
   repRef.on("value", snapshot => {
     const remoteData = snapshot.val();
-    if (remoteData && Array.isArray(remoteData.songs)) {
-      const cleanSongs = deduplicateSongs(remoteData.songs);
-      const needsDbUpdate = cleanSongs.length !== remoteData.songs.length;
+    if (remoteData !== null && typeof remoteData === "object") {
+      const rawSongs = Array.isArray(remoteData.songs) ? remoteData.songs : [];
+      const cleanSongs = deduplicateSongs(rawSongs);
+      const needsDbUpdate = cleanSongs.length !== rawSongs.length;
 
       state.songs = cleanSongs;
-      if (Array.isArray(remoteData.sets)) state.sets = remoteData.sets;
+      state.sets = Array.isArray(remoteData.sets) ? remoteData.sets : [];
 
       if (needsDbUpdate) {
         window.db.ref("repertoire").set({
