@@ -108,7 +108,8 @@ const el = {
   songContentInput: document.querySelector("#songContentInput"),
   deleteSongButton: document.querySelector("#deleteSongButton"),
   setDialog: document.querySelector("#setDialog"),
-  setForm: document.querySelector("#setForm"),
+  closeSetDialogButton: document.querySelector("#closeSetDialogButton"),
+  saveSetButton: document.querySelector("#saveSetButton"),
   setNameInput: document.querySelector("#setNameInput"),
   setSongChoices: document.querySelector("#setSongChoices")
 };
@@ -492,12 +493,23 @@ function openSetEditor() {
   el.setDialog.showModal();
 }
 
-function saveSet() {
+function saveSet(event) {
+  if (event) event.preventDefault();
   const name = el.setNameInput.value.trim();
   const songIds = [...el.setSongChoices.querySelectorAll("input:checked")].map(input => input.value);
-  if (!name || !songIds.length) return;
+
+  if (!name) {
+    alert("Por favor, digite um nome para a sequência.");
+    return;
+  }
+  if (!songIds.length) {
+    alert("Por favor, selecione ao menos uma música para incluir na sequência.");
+    return;
+  }
+
   state.sets.push({ id: crypto.randomUUID(), name, songIds });
   saveState();
+  if (el.setDialog.open) el.setDialog.close();
   renderHome();
 }
 
@@ -638,8 +650,8 @@ el.importFileInput.addEventListener("change", event => importRepertoireFile(even
 el.newSetButton.addEventListener("click", openSetEditor);
 el.saveSongButton.addEventListener("click", saveSong);
 el.deleteSongButton.addEventListener("click", deleteSong);
-el.closeSongDialogButton.addEventListener("click", () => el.songDialog.close());
-el.setForm.addEventListener("submit", saveSet);
+el.saveSetButton.addEventListener("click", saveSet);
+el.closeSetDialogButton.addEventListener("click", () => el.setDialog.close());
 
 let pinchStartDistance = 0;
 el.readerContent.addEventListener("touchstart", event => {

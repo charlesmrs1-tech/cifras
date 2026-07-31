@@ -110,22 +110,22 @@
     </dialog>
 
     <dialog id="setDialog" class="modal wide">
-      <form method="dialog" class="modal-body" id="setForm">
+      <div class="modal-body">
         <div class="modal-title">
           <h2>Criar sequência</h2>
-          <button class="icon-button" value="cancel" aria-label="Fechar">×</button>
+          <button class="icon-button" id="closeSetDialogButton" aria-label="Fechar">×</button>
         </div>
         <label>Nome da sequência <input id="setNameInput" required placeholder="Ex.: Sertanejo animadas"></label>
         <div id="setSongChoices" class="choice-list"></div>
         <div class="form-actions">
-          <button class="primary-button" value="default">Salvar sequência</button>
+          <button type="button" class="primary-button" id="saveSetButton">Salvar sequência</button>
         </div>
-      </form>
+      </div>
     </dialog>
 
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="firebase-config.js?v=12"></script>
-    <script src="app.js?v=12"></script>
+    <script src="firebase-config.js?v=13"></script>
+    <script src="app.js?v=13"></script>
   </body>
 </html>
