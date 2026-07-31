@@ -404,7 +404,8 @@ function openSongEditor(songId = null) {
   el.songDialog.showModal();
 }
 
-function saveSong() {
+function saveSong(event) {
+  if (event) event.preventDefault();
   const data = {
     title: el.songTitleInput.value.trim(),
     style: el.songStyleInput.value.trim(),
@@ -419,18 +420,29 @@ function saveSong() {
   }
 
   saveState();
+  if (el.songDialog.open) el.songDialog.close();
   renderHome();
   if (editingSongId === currentSongId) openReader(editingSongId, currentQueue);
 }
 
-function deleteSong() {
+function deleteSong(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
   if (!editingSongId) return;
+
   const song = state.songs.find(s => s.id === editingSongId);
   const songTitle = song ? song.title : "esta música";
   if (!confirm(`Tem certeza que deseja excluir "${songTitle}"?`)) return;
 
   const idToDelete = editingSongId;
   editingSongId = null;
+
+  // Limpa o formulário imediatamente para evitar recriação pelo submit
+  el.songTitleInput.value = "";
+  el.songStyleInput.value = "";
+  el.songContentInput.value = "";
 
   state.songs = state.songs.filter(song => song.id !== idToDelete);
   state.sets = state.sets.map(set => ({ ...set, songIds: set.songIds.filter(id => id !== idToDelete) }));
