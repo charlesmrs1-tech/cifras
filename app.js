@@ -2,7 +2,7 @@ const STORAGE_KEY = "cifras-charles-v1";
 
 const sampleSongs = [
   {
-    id: crypto.randomUUID(),
+    id: "sample-evidencias",
     title: "Evidencias",
     style: "Sertanejo moda",
     content: `Tom: G
@@ -17,7 +17,7 @@ C
 E porque eu te quero`
   },
   {
-    id: crypto.randomUUID(),
+    id: "sample-fio-de-cabelo",
     title: "Fio de Cabelo",
     style: "Sertanejo moda",
     content: `Tom: A
@@ -32,7 +32,7 @@ E
 Tem muito valor`
   },
   {
-    id: crypto.randomUUID(),
+    id: "sample-tempo-perdido",
     title: "Tempo Perdido",
     style: "Rock",
     content: `Tom: C
@@ -49,8 +49,8 @@ Temos todo o tempo do mundo`
 ];
 
 const sampleSets = [
-  { id: crypto.randomUUID(), name: "Sertanejo modas", songIds: [] },
-  { id: crypto.randomUUID(), name: "Rock nacional", songIds: [] }
+  { id: "sample-set-sertanejo", name: "Sertanejo modas", songIds: ["sample-evidencias", "sample-fio-de-cabelo"] },
+  { id: "sample-set-rock", name: "Rock nacional", songIds: ["sample-tempo-perdido"] }
 ];
 
 let state = loadState();
@@ -125,7 +125,25 @@ function loadState() {
   return { songs: sampleSongs, sets: sampleSets, readerSize: 24, scrollSpeed: 1 };
 }
 
+function deduplicateSongs(songsList) {
+  if (!Array.isArray(songsList)) return [];
+  const seenTitles = new Set();
+  const uniqueSongs = [];
+
+  for (const song of songsList) {
+    if (!song || !song.title) continue;
+    const titleKey = normalize(song.title.trim());
+    if (!seenTitles.has(titleKey)) {
+      seenTitles.add(titleKey);
+      uniqueSongs.push(song);
+    }
+  }
+
+  return uniqueSongs;
+}
+
 function saveState() {
+  state.songs = deduplicateSongs(state.songs);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   if (window.firebaseInitialized && window.db) {
     window.db.ref("repertoire").set({
@@ -154,27 +172,26 @@ function setupCloudSync() {
   repRef.on("value", snapshot => {
     const remoteData = snapshot.val();
     if (remoteData && Array.isArray(remoteData.songs) && remoteData.songs.length > 0) {
-      // Mescla músicas cadastradas localmente que ainda não estejam na nuvem
-      const remoteIds = new Set(remoteData.songs.map(s => s.id));
-      const localOnlySongs = (state.songs || []).filter(s => s && s.id && !remoteIds.has(s.id));
-      
-      if (localOnlySongs.length > 0) {
-        const mergedSongs = [...remoteData.songs, ...localOnlySongs];
-        remoteData.songs = mergedSongs;
+      const rawSongs = [...remoteData.songs, ...(state.songs || [])];
+      const cleanSongs = deduplicateSongs(rawSongs);
+
+      const needsDbUpdate = cleanSongs.length !== remoteData.songs.length;
+
+      state.songs = cleanSongs;
+      if (Array.isArray(remoteData.sets)) state.sets = remoteData.sets;
+
+      if (needsDbUpdate) {
         window.db.ref("repertoire").set({
-          songs: mergedSongs,
-          sets: remoteData.sets || state.sets,
+          songs: cleanSongs,
+          sets: state.sets,
           updatedAt: new Date().toISOString()
         });
       }
 
-      state.songs = remoteData.songs;
-      if (Array.isArray(remoteData.sets)) state.sets = remoteData.sets;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       renderHome();
       updateSyncStatus("🟢 Nuvem sincronizada", "online");
     } else {
-      // Se o banco na nuvem estiver vazio, sobe todo o repertório local
       saveState();
     }
   }, error => {
