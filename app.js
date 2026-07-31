@@ -677,12 +677,16 @@ el.readerScreen.addEventListener("click", event => {
   if (!currentSongId || lastTouchWasPinch) return;
   if (event.target.closest("button, input, textarea, dialog, .topbar, .reader-tools")) return;
 
-  const rightSide = event.clientX > window.innerWidth * 0.55;
-  const middleBand = event.clientY > window.innerHeight * 0.22 && event.clientY < window.innerHeight * 0.86;
+  const middleBand = event.clientY > window.innerHeight * 0.15 && event.clientY < window.innerHeight * 0.88;
+  if (!middleBand) return;
 
-  if (rightSide && middleBand) {
-    event.preventDefault();
-    moveInQueue(1);
+  const isRightSide = event.clientX >= window.innerWidth * 0.5;
+
+  event.preventDefault();
+  if (isRightSide) {
+    moveInQueue(1); // Próxima música
+  } else {
+    moveInQueue(-1); // Música anterior
   }
 });
 
