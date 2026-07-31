@@ -172,10 +172,8 @@ function setupCloudSync() {
   const repRef = window.db.ref("repertoire");
   repRef.on("value", snapshot => {
     const remoteData = snapshot.val();
-    if (remoteData && Array.isArray(remoteData.songs) && remoteData.songs.length > 0) {
-      const rawSongs = [...remoteData.songs, ...(state.songs || [])];
-      const cleanSongs = deduplicateSongs(rawSongs);
-
+    if (remoteData && Array.isArray(remoteData.songs)) {
+      const cleanSongs = deduplicateSongs(remoteData.songs);
       const needsDbUpdate = cleanSongs.length !== remoteData.songs.length;
 
       state.songs = cleanSongs;
@@ -427,11 +425,20 @@ function saveSong() {
 
 function deleteSong() {
   if (!editingSongId) return;
-  state.songs = state.songs.filter(song => song.id !== editingSongId);
-  state.sets = state.sets.map(set => ({ ...set, songIds: set.songIds.filter(id => id !== editingSongId) }));
+  const song = state.songs.find(s => s.id === editingSongId);
+  const songTitle = song ? song.title : "esta música";
+  if (!confirm(`Tem certeza que deseja excluir "${songTitle}"?`)) return;
+
+  const idToDelete = editingSongId;
+  editingSongId = null;
+
+  state.songs = state.songs.filter(song => song.id !== idToDelete);
+  state.sets = state.sets.map(set => ({ ...set, songIds: set.songIds.filter(id => id !== idToDelete) }));
+  
   saveState();
-  el.songDialog.close();
-  closeReader();
+  if (el.songDialog.open) el.songDialog.close();
+  if (currentSongId === idToDelete) closeReader();
+  renderHome();
 }
 
 function openSetEditor() {
