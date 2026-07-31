@@ -60,6 +60,7 @@ let editingSongId = null;
 let autoScrollEnabled = false;
 let autoScrollFrame = null;
 let lastScrollTime = 0;
+let currentScrollPos = 0;
 let lastTouchWasPinch = false;
 
 const el = {
@@ -329,21 +330,32 @@ function renderScrollControls() {
 
 function autoScrollStep(timestamp) {
   if (!autoScrollEnabled) return;
-  if (!lastScrollTime) lastScrollTime = timestamp;
+  if (!lastScrollTime) {
+    lastScrollTime = timestamp;
+    currentScrollPos = window.scrollY;
+  }
 
   const elapsed = timestamp - lastScrollTime;
-  const pixelsPerSecond = 16 * (state.scrollSpeed || 1);
-  const maxTop = document.documentElement.scrollHeight - window.innerHeight;
-  const nextTop = window.scrollY + (pixelsPerSecond * elapsed / 1000);
   lastScrollTime = timestamp;
 
-  if (nextTop >= maxTop - 2) {
+  // Ajusta se o usuário fez rolagem manual
+  if (Math.abs(window.scrollY - currentScrollPos) > 12) {
+    currentScrollPos = window.scrollY;
+  }
+
+  const speedMultiplier = state.scrollSpeed || 1;
+  const pixelsPerSecond = 20 * speedMultiplier;
+  currentScrollPos += (pixelsPerSecond * elapsed) / 1000;
+
+  const maxTop = document.documentElement.scrollHeight - window.innerHeight;
+
+  if (currentScrollPos >= maxTop - 2) {
     window.scrollTo({ top: maxTop });
     stopAutoScroll();
     return;
   }
 
-  window.scrollTo({ top: nextTop });
+  window.scrollTo({ top: currentScrollPos });
   autoScrollFrame = requestAnimationFrame(autoScrollStep);
 }
 
@@ -351,6 +363,7 @@ function startAutoScroll() {
   autoScrollEnabled = true;
   cancelAnimationFrame(autoScrollFrame);
   lastScrollTime = 0;
+  currentScrollPos = window.scrollY;
   autoScrollFrame = requestAnimationFrame(autoScrollStep);
   renderScrollControls();
 }
@@ -372,6 +385,7 @@ function changeScrollSpeed(delta) {
   state.scrollSpeed = Math.min(8, Math.max(1, (state.scrollSpeed || 1) + delta));
   saveState();
   lastScrollTime = 0;
+  currentScrollPos = window.scrollY;
   renderScrollControls();
 }
 
