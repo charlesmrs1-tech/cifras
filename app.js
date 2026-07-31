@@ -99,7 +99,8 @@ const el = {
   modalSearchInput: document.querySelector("#modalSearchInput"),
   modalSearchResults: document.querySelector("#modalSearchResults"),
   songDialog: document.querySelector("#songDialog"),
-  songForm: document.querySelector("#songForm"),
+  closeSongDialogButton: document.querySelector("#closeSongDialogButton"),
+  saveSongButton: document.querySelector("#saveSongButton"),
   songDialogTitle: document.querySelector("#songDialogTitle"),
   songTitleInput: document.querySelector("#songTitleInput"),
   songStyleInput: document.querySelector("#songStyleInput"),
@@ -434,22 +435,38 @@ function deleteSong(event) {
 
   const song = state.songs.find(s => s.id === editingSongId);
   const songTitle = song ? song.title : "esta música";
+  const titleKey = song ? normalize(song.title) : "";
+
   if (!confirm(`Tem certeza que deseja excluir "${songTitle}"?`)) return;
 
   const idToDelete = editingSongId;
   editingSongId = null;
 
-  // Limpa o formulário imediatamente para evitar recriação pelo submit
   el.songTitleInput.value = "";
   el.songStyleInput.value = "";
   el.songContentInput.value = "";
 
-  state.songs = state.songs.filter(song => song.id !== idToDelete);
-  state.sets = state.sets.map(set => ({ ...set, songIds: set.songIds.filter(id => id !== idToDelete) }));
+  const remainingSongs = state.songs.filter(s => {
+    if (s.id === idToDelete) return false;
+    if (titleKey && normalize(s.title) === titleKey) return false;
+    return true;
+  });
+
+  const deletedIds = new Set(
+    state.songs
+      .filter(s => s.id === idToDelete || (titleKey && normalize(s.title) === titleKey))
+      .map(s => s.id)
+  );
+
+  state.songs = remainingSongs;
+  state.sets = state.sets.map(set => ({
+    ...set,
+    songIds: set.songIds.filter(id => !deletedIds.has(id))
+  }));
   
   saveState();
   if (el.songDialog.open) el.songDialog.close();
-  if (currentSongId === idToDelete) closeReader();
+  if (currentSongId && deletedIds.has(currentSongId)) closeReader();
   renderHome();
 }
 
@@ -609,9 +626,10 @@ el.exportButton.addEventListener("click", exportRepertoire);
 el.importButton.addEventListener("click", () => el.importFileInput.click());
 el.importFileInput.addEventListener("change", event => importRepertoireFile(event.target.files?.[0]));
 el.newSetButton.addEventListener("click", openSetEditor);
-el.songForm.addEventListener("submit", saveSong);
-el.setForm.addEventListener("submit", saveSet);
+el.saveSongButton.addEventListener("click", saveSong);
 el.deleteSongButton.addEventListener("click", deleteSong);
+el.closeSongDialogButton.addEventListener("click", () => el.songDialog.close());
+el.setForm.addEventListener("submit", saveSet);
 
 let pinchStartDistance = 0;
 el.readerContent.addEventListener("touchstart", event => {

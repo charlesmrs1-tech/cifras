@@ -93,19 +93,19 @@
     </dialog>
 
     <dialog id="songDialog" class="modal wide">
-      <form method="dialog" class="modal-body" id="songForm">
+      <div class="modal-body">
         <div class="modal-title">
           <h2 id="songDialogTitle">Nova música</h2>
-          <button class="icon-button" value="cancel" aria-label="Fechar">×</button>
+          <button class="icon-button" id="closeSongDialogButton" aria-label="Fechar">×</button>
         </div>
         <label>Título <input id="songTitleInput" required></label>
         <label>Estilo <input id="songStyleInput" placeholder="Sertanejo animado, moda, rock..."></label>
         <label>Cifra e letra <textarea id="songContentInput" required spellcheck="false"></textarea></label>
         <div class="form-actions">
           <button type="button" class="danger-button" id="deleteSongButton">Excluir</button>
-          <button class="primary-button" value="default">Salvar</button>
+          <button type="button" class="primary-button" id="saveSongButton">Salvar</button>
         </div>
-      </form>
+      </div>
     </dialog>
 
     <dialog id="setDialog" class="modal wide">
@@ -124,7 +124,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="firebase-config.js?v=8"></script>
-    <script src="app.js?v=8"></script>
+    <script src="firebase-config.js?v=9"></script>
+    <script src="app.js?v=9"></script>
   </body>
 </html>
