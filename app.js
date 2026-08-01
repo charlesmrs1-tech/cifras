@@ -92,9 +92,6 @@ const el = {
   editSongButton: document.querySelector("#editSongButton"),
   directDeleteSongButton: document.querySelector("#directDeleteSongButton"),
   newSongButton: document.querySelector("#newSongButton"),
-  importButton: document.querySelector("#importButton"),
-  exportButton: document.querySelector("#exportButton"),
-  importFileInput: document.querySelector("#importFileInput"),
   newSetButton: document.querySelector("#newSetButton"),
   searchDialog: document.querySelector("#searchDialog"),
   modalSearchInput: document.querySelector("#modalSearchInput"),
@@ -644,9 +641,6 @@ el.scrollFasterButton.addEventListener("click", () => changeScrollSpeed(1));
 el.editSongButton.addEventListener("click", () => openSongEditor(currentSongId));
 el.directDeleteSongButton.addEventListener("click", () => deleteSongByIdOrTitle(currentSongId));
 el.newSongButton.addEventListener("click", () => openSongEditor());
-el.exportButton.addEventListener("click", exportRepertoire);
-el.importButton.addEventListener("click", () => el.importFileInput.click());
-el.importFileInput.addEventListener("change", event => importRepertoireFile(event.target.files?.[0]));
 el.newSetButton.addEventListener("click", openSetEditor);
 el.saveSongButton.addEventListener("click", saveSong);
 el.deleteSongButton.addEventListener("click", deleteSong);
