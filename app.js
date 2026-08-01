@@ -1,5 +1,12 @@
 const STORAGE_KEY = "cifras-charles-v1";
 
+function generateId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    try { return crypto.randomUUID(); } catch (e) {}
+  }
+  return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).substring(2, 9);
+}
+
 const sampleSongs = [
   {
     id: "sample-evidencias",
@@ -450,7 +457,7 @@ function saveSong(event) {
   if (editingSongId) {
     state.songs = state.songs.map(song => song.id === editingSongId ? { ...song, ...data } : song);
   } else {
-    state.songs.push({ id: crypto.randomUUID(), ...data });
+    state.songs.push({ id: generateId(), ...data });
   }
 
   saveState();
@@ -526,18 +533,31 @@ function openSetEditor() {
 function saveSet(event) {
   if (event) event.preventDefault();
   const name = el.setNameInput.value.trim();
-  const songIds = [...el.setSongChoices.querySelectorAll("input:checked")].map(input => input.value);
+  const selectedInputs = [...el.setSongChoices.querySelectorAll("input:checked")];
 
   if (!name) {
     alert("Por favor, digite um nome para a sequência.");
     return;
   }
-  if (!songIds.length) {
+  if (!selectedInputs.length) {
     alert("Por favor, selecione ao menos uma música para incluir na sequência.");
     return;
   }
 
-  state.sets.push({ id: crypto.randomUUID(), name, songIds });
+  const songIds = selectedInputs.map(input => input.value);
+  const songTitles = selectedInputs.map(input => {
+    const song = state.songs.find(s => s.id === input.value);
+    return song ? normalize(song.title) : "";
+  }).filter(Boolean);
+
+  const newSet = {
+    id: generateId(),
+    name,
+    songIds,
+    songTitles
+  };
+
+  state.sets.push(newSet);
   saveState();
   if (el.setDialog.open) el.setDialog.close();
   renderHome();
