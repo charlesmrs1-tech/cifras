@@ -1,9 +1,9 @@
-const STORAGE_KEY = "cifras-charles-v33";
+const STORAGE_KEY = "cifras-charles-v34";
 
 try {
-  if (!localStorage.getItem("cifras-charles-purged-v33")) {
+  if (!localStorage.getItem("cifras-charles-purged-v34")) {
     localStorage.clear();
-    localStorage.setItem("cifras-charles-purged-v33", "true");
+    localStorage.setItem("cifras-charles-purged-v34", "true");
   }
 } catch (e) {}
 
@@ -326,9 +326,6 @@ function deleteSet(setIdOrName, event) {
   );
 
   if (setIndex === -1) return;
-
-  const set = state.sets[setIndex];
-  if (!confirm(`Tem certeza que deseja apagar a sequência "${set.name}"?`)) return;
 
   state.sets.splice(setIndex, 1);
 
