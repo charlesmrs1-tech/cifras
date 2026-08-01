@@ -55,10 +55,7 @@ Temos todo o tempo do mundo`
   }
 ];
 
-const sampleSets = [
-  { id: "sample-set-sertanejo", name: "Sertanejo modas", songIds: ["sample-evidencias", "sample-fio-de-cabelo"] },
-  { id: "sample-set-rock", name: "Rock nacional", songIds: ["sample-tempo-perdido"] }
-];
+const sampleSets = [];
 
 let state = loadState();
 let currentSongId = null;
@@ -132,7 +129,7 @@ function loadState() {
       if (parsed && typeof parsed === "object") {
         return {
           songs: Array.isArray(parsed.songs) ? parsed.songs : sampleSongs,
-          sets: Array.isArray(parsed.sets) ? parsed.sets : sampleSets,
+          sets: Array.isArray(parsed.sets) ? parsed.sets : [],
           readerSize: typeof parsed.readerSize === "number" ? parsed.readerSize : 24,
           scrollSpeed: typeof parsed.scrollSpeed === "number" ? parsed.scrollSpeed : 1
         };
@@ -142,9 +139,7 @@ function loadState() {
     }
   }
 
-  sampleSets[0].songIds = sampleSongs.filter(song => song.style.includes("Sertanejo")).map(song => song.id);
-  sampleSets[1].songIds = sampleSongs.filter(song => song.style.includes("Rock")).map(song => song.id);
-  return { songs: sampleSongs, sets: sampleSets, readerSize: 24, scrollSpeed: 1 };
+  return { songs: sampleSongs, sets: [], readerSize: 24, scrollSpeed: 1 };
 }
 
 function deduplicateSongs(songsList) {
