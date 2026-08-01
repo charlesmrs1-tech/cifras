@@ -1,30 +1,4 @@
 const STORAGE_KEY = "cifras-charles-v1";
-const DELETED_SETS_KEY = "cifras-charles-deleted-sets-v1";
-
-function getDeletedSetIds() {
-  try {
-    const saved = localStorage.getItem(DELETED_SETS_KEY);
-    return saved ? new Set(JSON.parse(saved)) : new Set();
-  } catch (e) {
-    return new Set();
-  }
-}
-
-let deletedSetIds = getDeletedSetIds();
-
-function recordDeletedSet(set) {
-  if (!set) return;
-  if (set.id) deletedSetIds.add(set.id);
-  if (set.name) deletedSetIds.add(normalize(set.name));
-  localStorage.setItem(DELETED_SETS_KEY, JSON.stringify(Array.from(deletedSetIds)));
-}
-
-function isSetDeleted(set) {
-  if (!set) return true;
-  if (set.id && deletedSetIds.has(set.id)) return true;
-  if (set.name && deletedSetIds.has(normalize(set.name))) return true;
-  return false;
-}
 
 function generateId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -218,7 +192,6 @@ function deduplicateSets(setsList) {
   const result = [];
   for (const set of sets) {
     if (!set || !set.name) continue;
-    if (isSetDeleted(set)) continue;
     const nameKey = normalize(set.name.trim());
     if (!seen.has(nameKey)) {
       seen.add(nameKey);
@@ -342,10 +315,10 @@ function deleteSet(setId, event) {
   const set = state.sets.find(s => s.id === setId);
   if (!set) return;
 
+  const targetName = set.name ? normalize(set.name) : "";
   if (!confirm(`Tem certeza que deseja apagar a sequência "${set.name}"?`)) return;
 
-  recordDeletedSet(set);
-  state.sets = state.sets.filter(s => !isSetDeleted(s));
+  state.sets = state.sets.filter(s => s.id !== setId && (targetName ? normalize(s.name) !== targetName : true));
 
   saveState();
   renderHome();
