@@ -270,7 +270,7 @@ function closeReader() {
   currentQueue = [];
   el.readerScreen.classList.remove("active");
   el.homeScreen.classList.add("active");
-  el.screenHint.textContent = "Biblioteca";
+  el.screenHint.textContent = "";
   el.backButton.style.visibility = "hidden";
   renderHome();
 }
