@@ -126,7 +126,21 @@ function updateSyncStatus(text, statusClass = "") {
 
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) return JSON.parse(saved);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === "object") {
+        return {
+          songs: Array.isArray(parsed.songs) ? parsed.songs : sampleSongs,
+          sets: Array.isArray(parsed.sets) ? parsed.sets : sampleSets,
+          readerSize: typeof parsed.readerSize === "number" ? parsed.readerSize : 24,
+          scrollSpeed: typeof parsed.scrollSpeed === "number" ? parsed.scrollSpeed : 1
+        };
+      }
+    } catch (e) {
+      console.error("Erro ao ler localStorage:", e);
+    }
+  }
 
   sampleSets[0].songIds = sampleSongs.filter(song => song.style.includes("Sertanejo")).map(song => song.id);
   sampleSets[1].songIds = sampleSongs.filter(song => song.style.includes("Rock")).map(song => song.id);
@@ -152,6 +166,7 @@ function deduplicateSongs(songsList) {
 
 function saveState() {
   state.songs = deduplicateSongs(state.songs);
+  if (!Array.isArray(state.sets)) state.sets = [];
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   if (window.firebaseInitialized && window.db) {
     window.db.ref("repertoire").set({
@@ -191,8 +206,14 @@ function setupCloudSync() {
     return;
   }
 
-  updateSyncStatus("⚡ Conectando...", "");
-  
+  window.db.ref(".info/connected").on("value", snap => {
+    if (snap.val() === true) {
+      updateSyncStatus("🟢 Nuvem ativa", "online");
+    } else {
+      updateSyncStatus("💾 Modo local (reconectando)", "offline");
+    }
+  });
+
   const repRef = window.db.ref("repertoire");
   repRef.on("value", snapshot => {
     const remoteData = snapshot.val();
@@ -217,13 +238,12 @@ function setupCloudSync() {
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       renderHome();
-      updateSyncStatus("🟢 Nuvem sincronizada", "online");
     } else {
       saveState();
     }
   }, error => {
     console.error("Erro na escuta do Firebase:", error);
-    updateSyncStatus("🟡 Erro de conexão (Modo local)", "offline");
+    updateSyncStatus("🟡 Modo local", "offline");
   });
 }
 

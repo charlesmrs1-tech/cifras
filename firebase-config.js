@@ -2,6 +2,7 @@
 // Projeto: musicas-5ee55
 
 const firebaseConfig = {
+  apiKey: "AIzaSyD_musicas_5ee55_rtdb_charles",
   projectId: "musicas-5ee55",
   databaseURL: "https://musicas-5ee55-default-rtdb.firebaseio.com",
   authDomain: "musicas-5ee55.firebaseapp.com",
