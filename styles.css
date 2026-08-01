@@ -244,10 +244,39 @@ label textarea {
 }
 
 .set-card-item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
+  display: flex;
   align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 4px 8px;
+  margin-bottom: 8px;
+}
+
+.set-card-item .set-card {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px;
+}
+
+.btn-delete-set {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+.btn-delete-set:active {
+  background: rgba(239, 68, 68, 0.4);
 }
 
 .song-card span,

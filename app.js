@@ -304,19 +304,25 @@ function renderSets() {
             <strong>${escapeHtml(set.name)}</strong>
             <span>${count} musica${count === 1 ? "" : "s"} na sequência</span>
           </button>
-          <button class="icon-button" data-delete-set-id="${set.id}" title="Excluir sequência" style="color: var(--danger);">✕</button>
+          <button class="btn-delete-set" data-delete-set-id="${set.id}">Excluir</button>
         </div>
       `;
     }).join("")
     : `<p class="reader-meta">Crie uma sequência para tocar por estilo ou ocasião.</p>`;
 }
 
-function deleteSet(setId) {
+function deleteSet(setId, event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
   const set = state.sets.find(s => s.id === setId);
   if (!set) return;
-  if (!confirm(`Tem certeza que deseja excluir a sequência "${set.name}"?`)) return;
 
-  state.sets = state.sets.filter(s => s.id !== setId);
+  const targetName = set.name ? normalize(set.name) : "";
+  if (!confirm(`Tem certeza que deseja apagar a sequência "${set.name}"?`)) return;
+
+  state.sets = state.sets.filter(s => s.id !== setId && (targetName ? normalize(s.name) !== targetName : true));
   saveState();
   renderHome();
 }
@@ -713,13 +719,20 @@ el.songList.addEventListener("click", event => {
 el.setList.addEventListener("click", event => {
   const deleteBtn = event.target.closest("[data-delete-set-id]");
   if (deleteBtn) {
-    deleteSet(deleteBtn.dataset.deleteSetId);
+    event.preventDefault();
+    event.stopPropagation();
+    deleteSet(deleteBtn.dataset.deleteSetId, event);
     return;
   }
 
   const card = event.target.closest("[data-set-id]");
-  const set = state.sets.find(item => item.id === card?.dataset.setId);
-  if (set?.songIds.length) openReader(set.songIds[0], set.songIds);
+  if (card) {
+    const set = state.sets.find(item => item.id === card.dataset.setId);
+    if (set) {
+      const queueSongs = Array.isArray(set.songIds) && set.songIds.length ? set.songIds : state.songs.map(s => s.id);
+      openReader(queueSongs[0], queueSongs);
+    }
+  }
 });
 
 el.modalSearchResults.addEventListener("click", event => {
