@@ -118,6 +118,7 @@ const el = {
   setDialog: document.querySelector("#setDialog"),
   closeSetDialogButton: document.querySelector("#closeSetDialogButton"),
   saveSetButton: document.querySelector("#saveSetButton"),
+  clearAllSetsButton: document.querySelector("#clearAllSetsButton"),
   setNameInput: document.querySelector("#setNameInput"),
   setSongChoices: document.querySelector("#setSongChoices")
 };
@@ -306,7 +307,7 @@ function renderSets() {
             <strong>${escapeHtml(set.name)}</strong>
             <span>${count} musica${count === 1 ? "" : "s"} na sequência</span>
           </button>
-          <button class="btn-delete-set" data-delete-set-id="${set.id}" data-set-name="${escapeHtml(set.name)}">Excluir</button>
+          <button type="button" class="btn-delete-set" onclick="window.deleteSetDirect('${set.id}', event)">Excluir</button>
         </div>
       `;
     }).join("")
@@ -341,6 +342,18 @@ function deleteSet(setIdOrName, event) {
     });
   }
 }
+
+window.deleteSetDirect = deleteSet;
+
+function clearAllSets() {
+  state.sets = [];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  renderHome();
+  if (window.firebaseInitialized && window.db) {
+    window.db.ref("repertoire/sets").remove();
+  }
+}
+window.clearAllSets = clearAllSets;
 
 function openReader(songId, queue = state.songs.map(song => song.id)) {
   const song = state.songs.find(item => item.id === songId);
@@ -771,6 +784,7 @@ el.editSongButton.addEventListener("click", () => openSongEditor(currentSongId))
 el.directDeleteSongButton.addEventListener("click", () => deleteSongByIdOrTitle(currentSongId));
 el.newSongButton.addEventListener("click", () => openSongEditor());
 el.newSetButton.addEventListener("click", openSetEditor);
+el.clearAllSetsButton?.addEventListener("click", clearAllSets);
 el.saveSongButton.addEventListener("click", saveSong);
 el.deleteSongButton.addEventListener("click", deleteSong);
 el.saveSetButton.addEventListener("click", saveSet);

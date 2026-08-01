@@ -61,7 +61,10 @@
           <div id="setsPanel" class="panel">
             <div class="set-header">
               <h1>Sequências</h1>
-              <button class="primary-button" id="newSetButton">Criar sequência</button>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="primary-button" id="newSetButton">Criar sequência</button>
+                <button class="secondary-button" id="clearAllSetsButton" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4);">Limpar todas</button>
+              </div>
             </div>
             <div id="setList" class="set-list"></div>
           </div>
@@ -134,7 +137,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="firebase-config.js?v=34"></script>
-    <script src="app.js?v=34"></script>
+    <script src="firebase-config.js?v=35"></script>
+    <script src="app.js?v=35"></script>
   </body>
 </html>
