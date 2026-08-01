@@ -285,8 +285,12 @@ function renderSets() {
   const sets = Array.isArray(state.sets) ? state.sets : [];
   const validSongs = Array.isArray(state.songs) ? state.songs : [];
 
+  sets.forEach((set, index) => {
+    if (!set.id) set.id = "set-" + index + "-" + Date.now();
+  });
+
   el.setList.innerHTML = sets.length
-    ? sets.map(set => {
+    ? sets.map((set, index) => {
       const songIds = Array.isArray(set?.songIds) ? set.songIds : [];
       const songTitles = Array.isArray(set?.songTitles) ? set.songTitles : [];
       
@@ -300,28 +304,43 @@ function renderSets() {
             <strong>${escapeHtml(set.name)}</strong>
             <span>${count} musica${count === 1 ? "" : "s"} na sequência</span>
           </button>
-          <button class="btn-delete-set" data-delete-set-id="${set.id}">Excluir</button>
+          <button class="btn-delete-set" data-delete-set-id="${set.id}" data-set-name="${escapeHtml(set.name)}">Excluir</button>
         </div>
       `;
     }).join("")
     : `<p class="reader-meta">Crie uma sequência para tocar por estilo ou ocasião.</p>`;
 }
 
-function deleteSet(setId, event) {
+function deleteSet(setIdOrName, event) {
   if (event) {
     event.preventDefault();
     event.stopPropagation();
   }
-  const set = state.sets.find(s => s.id === setId);
-  if (!set) return;
 
-  const targetName = set.name ? normalize(set.name) : "";
+  const targetStr = String(setIdOrName || "").trim();
+  const setIndex = state.sets.findIndex(s => 
+    (s.id && String(s.id) === targetStr) ||
+    (s.name && normalize(s.name) === normalize(targetStr))
+  );
+
+  if (setIndex === -1) return;
+
+  const set = state.sets[setIndex];
   if (!confirm(`Tem certeza que deseja apagar a sequência "${set.name}"?`)) return;
 
-  state.sets = state.sets.filter(s => s.id !== setId && (targetName ? normalize(s.name) !== targetName : true));
+  state.sets.splice(setIndex, 1);
 
-  saveState();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   renderHome();
+
+  if (window.firebaseInitialized && window.db) {
+    const setsRef = window.db.ref("repertoire/sets");
+    setsRef.remove().then(() => {
+      if (state.sets.length > 0) {
+        setsRef.set(state.sets);
+      }
+    });
+  }
 }
 
 function openReader(songId, queue = state.songs.map(song => song.id)) {
