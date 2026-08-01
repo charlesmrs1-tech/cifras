@@ -243,6 +243,13 @@ label textarea {
   font-size: 18px;
 }
 
+.set-card-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
 .song-card span,
 .set-card span,
 .reader-meta {

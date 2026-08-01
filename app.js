@@ -160,6 +160,23 @@ function saveState() {
   }
 }
 
+function mergeSets(localSets, remoteSets) {
+  const map = new Map();
+  if (Array.isArray(remoteSets)) {
+    for (const set of remoteSets) {
+      if (set && set.id && set.name) map.set(set.id, set);
+    }
+  }
+  if (Array.isArray(localSets)) {
+    for (const set of localSets) {
+      if (set && set.id && set.name && !map.has(set.id)) {
+        map.set(set.id, set);
+      }
+    }
+  }
+  return Array.from(map.values());
+}
+
 function setupCloudSync() {
   const isCloudReady = typeof initFirebase === "function" && initFirebase();
   if (!isCloudReady) {
@@ -175,14 +192,17 @@ function setupCloudSync() {
     if (remoteData !== null && typeof remoteData === "object") {
       const rawSongs = Array.isArray(remoteData.songs) ? remoteData.songs : [];
       const cleanSongs = deduplicateSongs(rawSongs);
-      const needsDbUpdate = cleanSongs.length !== rawSongs.length;
+      const mergedSets = mergeSets(state.sets, remoteData.sets);
+
+      const songsNeedsUpdate = cleanSongs.length !== rawSongs.length;
+      const setsNeedsUpdate = mergedSets.length !== (Array.isArray(remoteData.sets) ? remoteData.sets.length : 0);
 
       state.songs = cleanSongs;
-      state.sets = Array.isArray(remoteData.sets) ? remoteData.sets : [];
+      state.sets = mergedSets;
 
-      if (needsDbUpdate) {
+      if (songsNeedsUpdate || setsNeedsUpdate) {
         window.db.ref("repertoire").set({
-          songs: cleanSongs,
+          songs: state.songs,
           sets: state.sets,
           updatedAt: new Date().toISOString()
         });
@@ -237,13 +257,26 @@ function renderSets() {
     ? state.sets.map(set => {
       const count = set.songIds.filter(id => state.songs.some(song => song.id === id)).length;
       return `
-        <button class="set-card" data-set-id="${set.id}">
-          <strong>${escapeHtml(set.name)}</strong>
-          <span>${count} musica${count === 1 ? "" : "s"} na sequência</span>
-        </button>
+        <div class="set-card-item">
+          <button class="set-card" data-set-id="${set.id}">
+            <strong>${escapeHtml(set.name)}</strong>
+            <span>${count} musica${count === 1 ? "" : "s"} na sequência</span>
+          </button>
+          <button class="icon-button" data-delete-set-id="${set.id}" title="Excluir sequência" style="color: var(--danger);">✕</button>
+        </div>
       `;
     }).join("")
     : `<p class="reader-meta">Crie uma sequência para tocar por estilo ou ocasião.</p>`;
+}
+
+function deleteSet(setId) {
+  const set = state.sets.find(s => s.id === setId);
+  if (!set) return;
+  if (!confirm(`Tem certeza que deseja excluir a sequência "${set.name}"?`)) return;
+
+  state.sets = state.sets.filter(s => s.id !== setId);
+  saveState();
+  renderHome();
 }
 
 function openReader(songId, queue = state.songs.map(song => song.id)) {
@@ -612,6 +645,12 @@ el.songList.addEventListener("click", event => {
 });
 
 el.setList.addEventListener("click", event => {
+  const deleteBtn = event.target.closest("[data-delete-set-id]");
+  if (deleteBtn) {
+    deleteSet(deleteBtn.dataset.deleteSetId);
+    return;
+  }
+
   const card = event.target.closest("[data-set-id]");
   const set = state.sets.find(item => item.id === card?.dataset.setId);
   if (set?.songIds.length) openReader(set.songIds[0], set.songIds);
