@@ -182,18 +182,23 @@ function saveState() {
   }
 }
 
+function toArray(val) {
+  if (Array.isArray(val)) return val.filter(Boolean);
+  if (val && typeof val === "object") return Object.values(val).filter(Boolean);
+  return [];
+}
+
 function mergeSets(localSets, remoteSets) {
   const map = new Map();
-  if (Array.isArray(remoteSets)) {
-    for (const set of remoteSets) {
-      if (set && set.id && set.name) map.set(set.id, set);
-    }
+  const remoteArray = toArray(remoteSets);
+  const localArray = toArray(localSets);
+
+  for (const set of remoteArray) {
+    if (set && set.id && set.name) map.set(set.id, set);
   }
-  if (Array.isArray(localSets)) {
-    for (const set of localSets) {
-      if (set && set.id && set.name && !map.has(set.id)) {
-        map.set(set.id, set);
-      }
+  for (const set of localArray) {
+    if (set && set.id && set.name && !map.has(set.id)) {
+      map.set(set.id, set);
     }
   }
   return Array.from(map.values());
@@ -218,12 +223,13 @@ function setupCloudSync() {
   repRef.on("value", snapshot => {
     const remoteData = snapshot.val();
     if (remoteData !== null && typeof remoteData === "object") {
-      const rawSongs = Array.isArray(remoteData.songs) ? remoteData.songs : [];
+      const rawSongs = toArray(remoteData.songs);
       const cleanSongs = deduplicateSongs(rawSongs);
-      const mergedSets = mergeSets(state.sets, remoteData.sets);
+      const remoteSets = toArray(remoteData.sets);
+      const mergedSets = mergeSets(state.sets, remoteSets);
 
       const songsNeedsUpdate = cleanSongs.length !== rawSongs.length;
-      const setsNeedsUpdate = mergedSets.length !== (Array.isArray(remoteData.sets) ? remoteData.sets.length : 0);
+      const setsNeedsUpdate = mergedSets.length !== remoteSets.length;
 
       state.songs = cleanSongs;
       state.sets = mergedSets;
@@ -542,9 +548,10 @@ function openSetEditor() {
   el.setSongChoices.innerHTML = state.songs
     .sort((a, b) => a.title.localeCompare(b.title, "pt-BR"))
     .map(song => `
-      <label>
+      <label class="choice-item">
         <input type="checkbox" value="${song.id}">
-        <span>${escapeHtml(song.title)} · ${escapeHtml(song.style || "Sem estilo")}</span>
+        <span class="choice-title">${escapeHtml(song.title)}</span>
+        <span class="choice-style">${escapeHtml(song.style || "Sem estilo")}</span>
       </label>
     `).join("");
   el.setDialog.showModal();
@@ -557,7 +564,10 @@ function switchTab(tabName) {
 }
 
 function saveSet(event) {
-  if (event) event.preventDefault();
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
   const name = el.setNameInput.value.trim();
   const selectedInputs = [...el.setSongChoices.querySelectorAll("input:checked")];
 
@@ -583,7 +593,8 @@ function saveSet(event) {
     songTitles
   };
 
-  state.sets.push(newSet);
+  if (!Array.isArray(state.sets)) state.sets = [];
+  state.sets.unshift(newSet);
   saveState();
   if (el.setDialog.open) el.setDialog.close();
   switchTab("sets");
