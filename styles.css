@@ -243,6 +243,7 @@ label textarea {
   font-size: 18px;
 }
 
+.song-card-item,
 .set-card-item {
   display: flex;
   align-items: center;
@@ -254,11 +255,13 @@ label textarea {
   margin-bottom: 8px;
 }
 
+.song-card-item .song-card,
 .set-card-item .set-card {
   flex: 1;
   border: none;
   background: transparent;
   padding: 10px;
+  text-align: left;
 }
 
 .btn-delete-set {

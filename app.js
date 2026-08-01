@@ -276,13 +276,31 @@ function renderSongs() {
   const songs = filteredSongs();
   el.songList.innerHTML = songs.length
     ? songs.map(song => `
-      <button class="song-card" data-song-id="${song.id}">
-        <strong>${escapeHtml(song.title)}</strong>
-        <span>${escapeHtml(song.style || "Sem estilo")} · toque para abrir</span>
-      </button>
+      <div class="song-card-item">
+        <button class="song-card" data-song-id="${song.id}">
+          <strong>${escapeHtml(song.title)}</strong>
+          <span>${escapeHtml(song.style || "Sem estilo")} · toque para abrir</span>
+        </button>
+        <button type="button" class="btn-delete-set" onclick="window.deleteSongDirect('${song.id}', event)">Excluir</button>
+      </div>
     `).join("")
     : `<p class="reader-meta">Nenhuma música encontrada.</p>`;
 }
+
+function deleteSongDirect(songId, event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const songIndex = state.songs.findIndex(s => s.id === songId);
+  if (songIndex === -1) return;
+
+  state.songs.splice(songIndex, 1);
+  saveState();
+  renderHome();
+}
+
+window.deleteSongDirect = deleteSongDirect;
 
 function renderSets() {
   const sets = Array.isArray(state.sets) ? state.sets : [];
