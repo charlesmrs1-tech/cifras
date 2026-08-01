@@ -1,4 +1,11 @@
-const STORAGE_KEY = "cifras-charles-v2";
+const STORAGE_KEY = "cifras-charles-v33";
+
+try {
+  if (!localStorage.getItem("cifras-charles-purged-v33")) {
+    localStorage.clear();
+    localStorage.setItem("cifras-charles-purged-v33", "true");
+  }
+} catch (e) {}
 
 function generateId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
