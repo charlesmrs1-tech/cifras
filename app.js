@@ -169,8 +169,8 @@ function saveState() {
   state.sets = deduplicateSets(state.sets);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   if (window.firebaseInitialized && window.db) {
-    window.db.ref("repertoire/songs").set(state.songs);
-    window.db.ref("repertoire/sets").set(state.sets);
+    window.db.ref("repertoire/songs").set(state.songs.length ? state.songs : null);
+    window.db.ref("repertoire/sets").set(state.sets.length ? state.sets : null);
     window.db.ref("repertoire/updatedAt").set(new Date().toISOString()).then(() => {
       updateSyncStatus("🟢 Nuvem ativa", "online");
     }).catch(err => {
@@ -319,8 +319,12 @@ function deleteSet(setId, event) {
   if (!confirm(`Tem certeza que deseja apagar a sequência "${set.name}"?`)) return;
 
   state.sets = state.sets.filter(s => s.id !== setId && (targetName ? normalize(s.name) !== targetName : true));
-  saveState();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   renderHome();
+
+  if (window.firebaseInitialized && window.db) {
+    window.db.ref("repertoire/sets").set(state.sets.length ? state.sets : null);
+  }
 }
 
 function openReader(songId, queue = state.songs.map(song => song.id)) {
