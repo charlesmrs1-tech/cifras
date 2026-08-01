@@ -65,6 +65,9 @@ Temos todo o tempo do mundo`
 const sampleSets = [];
 
 let state = loadState();
+if (Array.isArray(state.sets)) {
+  state.sets = state.sets.filter(s => s && s.name && normalize(s.name) !== "teste");
+}
 let currentSongId = null;
 let currentQueue = [];
 let editingSongId = null;
@@ -339,14 +342,15 @@ function deleteSet(setIdOrName, event) {
   }
 
   const targetStr = String(setIdOrName || "").trim();
-  const setIndex = state.sets.findIndex(s => 
-    (s.id && String(s.id) === targetStr) ||
-    (s.name && normalize(s.name) === normalize(targetStr))
-  );
+  const targetNorm = normalize(targetStr);
 
-  if (setIndex === -1) return;
-
-  state.sets.splice(setIndex, 1);
+  state.sets = state.sets.filter(s => {
+    if (!s) return false;
+    const sId = String(s.id || "").trim();
+    const sName = normalize(s.name || "");
+    if (sId === targetStr || sName === targetNorm) return false;
+    return true;
+  });
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   renderHome();
