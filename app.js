@@ -530,6 +530,12 @@ function openSetEditor() {
   el.setDialog.showModal();
 }
 
+function switchTab(tabName) {
+  el.tabs.forEach(item => item.classList.toggle("active", item.dataset.tab === tabName));
+  el.songsPanel.classList.toggle("active", tabName === "songs");
+  el.setsPanel.classList.toggle("active", tabName === "sets");
+}
+
 function saveSet(event) {
   if (event) event.preventDefault();
   const name = el.setNameInput.value.trim();
@@ -560,7 +566,9 @@ function saveSet(event) {
   state.sets.push(newSet);
   saveState();
   if (el.setDialog.open) el.setDialog.close();
+  switchTab("sets");
   renderHome();
+  alert(`Sequência "${name}" salva com sucesso!`);
 }
 
 function exportRepertoire() {
@@ -684,11 +692,7 @@ el.modalSearchResults.addEventListener("click", event => {
   }
 });
 
-el.tabs.forEach(tab => tab.addEventListener("click", () => {
-  el.tabs.forEach(item => item.classList.toggle("active", item === tab));
-  el.songsPanel.classList.toggle("active", tab.dataset.tab === "songs");
-  el.setsPanel.classList.toggle("active", tab.dataset.tab === "sets");
-}));
+el.tabs.forEach(tab => tab.addEventListener("click", () => switchTab(tab.dataset.tab)));
 
 el.prevSongButton.addEventListener("click", () => moveInQueue(-1));
 el.nextSongButton.addEventListener("click", () => moveInQueue(1));

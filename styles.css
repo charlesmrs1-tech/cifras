@@ -428,12 +428,18 @@ label {
   display: grid;
   grid-template-columns: 28px 1fr;
   align-items: center;
-  min-height: 42px;
+  min-height: 44px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 8px;
+  padding: 8px 10px;
   background: #0c0e0b;
   color: var(--text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.choice-list label span {
+  pointer-events: none;
 }
 
 .choice-list input {
