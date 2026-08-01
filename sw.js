@@ -1,4 +1,4 @@
-const CACHE_NAME = "cifras-charles-v31";
+const CACHE_NAME = "cifras-charles-v32";
 const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./firebase-config.js", "./manifest.webmanifest"];
 
 self.addEventListener("install", event => {

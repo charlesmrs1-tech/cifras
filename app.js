@@ -1,4 +1,4 @@
-const STORAGE_KEY = "cifras-charles-v1";
+const STORAGE_KEY = "cifras-charles-v2";
 
 function generateId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
