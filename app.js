@@ -194,10 +194,12 @@ function mergeSets(localSets, remoteSets) {
   const localArray = toArray(localSets);
 
   for (const set of remoteArray) {
-    if (set && set.id && set.name) map.set(set.id, set);
+    if (set && set.id && set.name) {
+      map.set(set.id, set);
+    }
   }
   for (const set of localArray) {
-    if (set && set.id && set.name && !map.has(set.id)) {
+    if (set && set.id && set.name) {
       map.set(set.id, set);
     }
   }
@@ -228,19 +230,8 @@ function setupCloudSync() {
       const remoteSets = toArray(remoteData.sets);
       const mergedSets = mergeSets(state.sets, remoteSets);
 
-      const songsNeedsUpdate = cleanSongs.length !== rawSongs.length;
-      const setsNeedsUpdate = mergedSets.length !== remoteSets.length;
-
       state.songs = cleanSongs;
       state.sets = mergedSets;
-
-      if (songsNeedsUpdate || setsNeedsUpdate) {
-        window.db.ref("repertoire").set({
-          songs: state.songs,
-          sets: state.sets,
-          updatedAt: new Date().toISOString()
-        });
-      }
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       renderHome();
@@ -254,7 +245,17 @@ function setupCloudSync() {
 }
 
 function normalize(value) {
-  return value.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return String(value || "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function escapeHtml(str) {
+  return String(str || "").replace(/[&<>"']/g, m => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[m]);
 }
 
 function filteredSongs(query = el.quickSearch.value) {
@@ -286,9 +287,18 @@ function renderSongs() {
 }
 
 function renderSets() {
-  el.setList.innerHTML = state.sets.length
-    ? state.sets.map(set => {
-      const count = set.songIds.filter(id => state.songs.some(song => song.id === id)).length;
+  const sets = Array.isArray(state.sets) ? state.sets : [];
+  const validSongs = Array.isArray(state.songs) ? state.songs : [];
+
+  el.setList.innerHTML = sets.length
+    ? sets.map(set => {
+      const songIds = Array.isArray(set?.songIds) ? set.songIds : [];
+      const songTitles = Array.isArray(set?.songTitles) ? set.songTitles : [];
+      
+      const count = validSongs.filter(song =>
+        songIds.includes(song.id) || songTitles.includes(normalize(song.title))
+      ).length;
+
       return `
         <div class="set-card-item">
           <button class="set-card" data-set-id="${set.id}">
