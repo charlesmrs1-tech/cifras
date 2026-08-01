@@ -166,14 +166,12 @@ function deduplicateSongs(songsList) {
 
 function saveState() {
   state.songs = deduplicateSongs(state.songs);
-  if (!Array.isArray(state.sets)) state.sets = [];
+  state.sets = deduplicateSets(state.sets);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   if (window.firebaseInitialized && window.db) {
-    window.db.ref("repertoire").set({
-      songs: state.songs,
-      sets: state.sets,
-      updatedAt: new Date().toISOString()
-    }).then(() => {
+    window.db.ref("repertoire/songs").set(state.songs);
+    window.db.ref("repertoire/sets").set(state.sets);
+    window.db.ref("repertoire/updatedAt").set(new Date().toISOString()).then(() => {
       updateSyncStatus("🟢 Nuvem ativa", "online");
     }).catch(err => {
       console.error("Erro ao salvar no Firebase:", err);
@@ -188,22 +186,19 @@ function toArray(val) {
   return [];
 }
 
-function mergeSets(localSets, remoteSets) {
-  const map = new Map();
-  const remoteArray = toArray(remoteSets);
-  const localArray = toArray(localSets);
-
-  for (const set of remoteArray) {
-    if (set && set.id && set.name) {
-      map.set(set.id, set);
+function deduplicateSets(setsList) {
+  const sets = toArray(setsList);
+  const seen = new Set();
+  const result = [];
+  for (const set of sets) {
+    if (!set || !set.name) continue;
+    const nameKey = normalize(set.name.trim());
+    if (!seen.has(nameKey)) {
+      seen.add(nameKey);
+      result.push(set);
     }
   }
-  for (const set of localArray) {
-    if (set && set.id && set.name) {
-      map.set(set.id, set);
-    }
-  }
-  return Array.from(map.values());
+  return result;
 }
 
 function setupCloudSync() {
@@ -227,10 +222,11 @@ function setupCloudSync() {
     if (remoteData !== null && typeof remoteData === "object") {
       const rawSongs = toArray(remoteData.songs);
       const cleanSongs = deduplicateSongs(rawSongs);
-      const remoteSets = toArray(remoteData.sets);
+      const rawSets = toArray(remoteData.sets);
+      const cleanSets = deduplicateSets(rawSets);
 
       state.songs = cleanSongs;
-      state.sets = remoteSets;
+      state.sets = cleanSets;
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       renderHome();
