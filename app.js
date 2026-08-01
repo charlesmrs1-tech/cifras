@@ -569,17 +569,13 @@ function saveSet(event) {
     event.stopPropagation();
   }
   const name = el.setNameInput.value.trim();
-  const selectedInputs = [...el.setSongChoices.querySelectorAll("input:checked")];
-
   if (!name) {
     alert("Por favor, digite um nome para a sequência.");
-    return;
-  }
-  if (!selectedInputs.length) {
-    alert("Por favor, selecione ao menos uma música para incluir na sequência.");
+    if (el.setNameInput) el.setNameInput.focus();
     return;
   }
 
+  const selectedInputs = [...el.setSongChoices.querySelectorAll("input:checked")];
   const songIds = selectedInputs.map(input => input.value);
   const songTitles = selectedInputs.map(input => {
     const song = state.songs.find(s => s.id === input.value);
@@ -590,11 +586,13 @@ function saveSet(event) {
     id: generateId(),
     name,
     songIds,
-    songTitles
+    songTitles,
+    createdAt: new Date().toISOString()
   };
 
   if (!Array.isArray(state.sets)) state.sets = [];
   state.sets.unshift(newSet);
+  
   saveState();
   if (el.setDialog.open) el.setDialog.close();
   switchTab("sets");
