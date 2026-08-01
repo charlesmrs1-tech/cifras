@@ -228,10 +228,9 @@ function setupCloudSync() {
       const rawSongs = toArray(remoteData.songs);
       const cleanSongs = deduplicateSongs(rawSongs);
       const remoteSets = toArray(remoteData.sets);
-      const mergedSets = mergeSets(state.sets, remoteSets);
 
       state.songs = cleanSongs;
-      state.sets = mergedSets;
+      state.sets = remoteSets;
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       renderHome();
