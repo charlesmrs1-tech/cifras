@@ -61,8 +61,9 @@ G
 Temos todo o tempo do mundo`
   }
 ];
-
 let state = loadState();
+let isAdmin = localStorage.getItem("isAdmin") === "true";
+
 if (Array.isArray(state.sets)) {
   state.sets = state.sets.filter(s => s && s.name && normalize(s.name) !== "teste");
 }
@@ -104,6 +105,7 @@ const el = {
   editSongButton: document.querySelector("#editSongButton"),
   directDeleteSongButton: document.querySelector("#directDeleteSongButton"),
   newSongButton: document.querySelector("#newSongButton"),
+  brandTitle: document.querySelector(".brand strong"),
   searchDialog: document.querySelector("#searchDialog"),
   modalSearchInput: document.querySelector("#modalSearchInput"),
   modalSearchResults: document.querySelector("#modalSearchResults"),
@@ -273,6 +275,13 @@ function renderHome() {
   document.documentElement.style.setProperty("--reader-size", `${state.readerSize}px`);
   renderScrollControls();
   el.backButton.style.visibility = currentSongId ? "visible" : "hidden";
+  
+  // Controle de acesso aos botões principais
+  el.newSongButton.style.display = isAdmin ? "inline-flex" : "none";
+  if (el.newSetButton) el.newSetButton.style.display = isAdmin ? "inline-flex" : "none";
+  if (el.clearAllSetsButton) el.clearAllSetsButton.style.display = isAdmin ? "inline-flex" : "none";
+  el.editSongButton.style.display = isAdmin ? "inline-flex" : "none";
+  el.directDeleteSongButton.style.display = isAdmin ? "inline-flex" : "none";
 }
 
 function renderSongs() {
@@ -284,7 +293,7 @@ function renderSongs() {
           <strong>${escapeHtml(song.title)}</strong>
           <span>${escapeHtml(song.style || "Sem estilo")} · toque para abrir</span>
         </button>
-        <button type="button" class="btn-delete-item" onclick="window.deleteSongDirect('${song.id}', event)">Excluir</button>
+        ${isAdmin ? `<button type="button" class="btn-delete-item" onclick="window.deleteSongDirect('${song.id}', event)">Excluir</button>` : ""}
       </div>
     `).join("")
     : `<p class="reader-meta">Nenhuma música encontrada.</p>`;
@@ -328,10 +337,12 @@ function renderSets() {
             <strong>${escapeHtml(set.name)}</strong>
             <span>${count} musica${count === 1 ? "" : "s"} na sequência</span>
           </button>
+          ${isAdmin ? `
           <div style="display: flex; flex-direction: column; gap: 4px;">
             <button type="button" class="btn-delete-item" style="color: var(--primary); border-color: rgba(167, 243, 208, 0.4);" onclick="openSetEditor('${set.id}')">Editar</button>
             <button type="button" class="btn-delete-item" onclick="window.deleteSetDirect('${set.id}', event)">Excluir</button>
           </div>
+          ` : ""}
         </div>
       `;
     }).join("")
@@ -722,6 +733,7 @@ let dragPlaceholder = null;
 
 function handleDragStart(e, target) {
   didDrag = false;
+  if (!isAdmin) return; // Somente administradores podem reordenar
   if (isDragging || (e.button !== undefined && e.button !== 0)) return;
   
   const item = target.closest(".song-card-item");
@@ -960,6 +972,36 @@ el.readerContent.addEventListener("touchmove", event => {
     pinchStartDistance = distance;
   }
 }, { passive: true });
+
+// Lógica secreta de Admin
+let brandTapCount = 0;
+let brandTapTimer = null;
+if (el.brandTitle) {
+  el.brandTitle.addEventListener("click", () => {
+    brandTapCount++;
+    clearTimeout(brandTapTimer);
+    if (brandTapCount >= 5) {
+      brandTapCount = 0;
+      if (isAdmin) {
+         if (confirm("Deseja sair do modo administrador (voltar para Leitura)?")) {
+           localStorage.removeItem("isAdmin");
+           location.reload();
+         }
+      } else {
+         const pwd = prompt("Digite a senha de administrador:");
+         if (pwd === "charles123") {
+           localStorage.setItem("isAdmin", "true");
+           alert("Modo Administrador ativado!");
+           location.reload();
+         } else if (pwd !== null) {
+           alert("Senha incorreta.");
+         }
+      }
+    } else {
+      brandTapTimer = setTimeout(() => brandTapCount = 0, 500);
+    }
+  });
+}
 
 el.readerScreen.addEventListener("click", event => {
   if (!currentSongId || lastTouchWasPinch) return;
