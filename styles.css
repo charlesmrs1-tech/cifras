@@ -264,7 +264,7 @@ label textarea {
   text-align: left;
 }
 
-.btn-delete-set {
+.btn-delete-item {
   background: rgba(239, 68, 68, 0.18);
   color: #f87171;
   border: 1px solid rgba(239, 68, 68, 0.35);
@@ -278,8 +278,106 @@ label textarea {
   touch-action: manipulation;
 }
 
-.btn-delete-set:active {
+.btn-delete-item:active {
   background: rgba(239, 68, 68, 0.4);
+}
+
+.btn-edit-set {
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+.btn-edit-set:active {
+  background: rgba(59, 130, 246, 0.4);
+}
+
+.set-editor-box {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.set-editor-section h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--accent);
+}
+
+.ordered-song-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+}
+
+.ordered-song-item .song-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.ordered-song-item .song-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  min-width: 20px;
+}
+
+.btn-order-action {
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.btn-order-action:active {
+  background: var(--line);
+}
+
+.btn-add-to-set {
+  background: rgba(34, 197, 94, 0.18);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.btn-remove-from-set {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  min-height: 36px;
 }
 
 .song-card span,
@@ -535,4 +633,34 @@ label {
     height: 40px;
     min-width: 44px;
   }
+}
+
+/* Drag and Drop Styles */
+.song-card-item {
+  position: relative;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.song-card-item.dragging {
+  opacity: 0.8;
+  z-index: 1000;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+  transform: scale(1.02);
+  cursor: grabbing;
+}
+
+.song-card-item.drag-over-top {
+  transform: translateY(10px);
+}
+
+.song-card-item.drag-over-bottom {
+  transform: translateY(-10px);
+}
+
+.song-list {
+  position: relative;
+  /* Prevent default context menu on long press */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }

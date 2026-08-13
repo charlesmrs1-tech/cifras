@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#10130f">
     <title>Músicas do Charles</title>
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="stylesheet" href="styles.css?v=33">
+    <link rel="stylesheet" href="styles.css?v=38">
     <script>
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
@@ -49,24 +49,8 @@
             </div>
           </div>
 
-          <div class="tabs" role="tablist" aria-label="Visões">
-            <button class="tab active" data-tab="songs" role="tab">Músicas</button>
-            <button class="tab" data-tab="sets" role="tab">Sequências</button>
-          </div>
-
           <div id="songsPanel" class="panel active">
             <div id="songList" class="song-list"></div>
-          </div>
-
-          <div id="setsPanel" class="panel">
-            <div class="set-header">
-              <h1>Sequências</h1>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button class="primary-button" id="newSetButton">Criar sequência</button>
-                <button class="secondary-button" id="clearAllSetsButton" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4);">Limpar todas</button>
-              </div>
-            </div>
-            <div id="setList" class="set-list"></div>
           </div>
         </section>
 
@@ -121,23 +105,9 @@
       </div>
     </dialog>
 
-    <dialog id="setDialog" class="modal wide">
-      <div class="modal-body">
-        <div class="modal-title">
-          <h2>Criar sequência</h2>
-          <button class="icon-button" id="closeSetDialogButton" aria-label="Fechar">×</button>
-        </div>
-        <label>Nome da sequência <input id="setNameInput" required placeholder="Ex.: Sertanejo animadas"></label>
-        <div id="setSongChoices" class="choice-list"></div>
-        <div class="form-actions">
-          <button type="button" class="primary-button" id="saveSetButton">Salvar sequência</button>
-        </div>
-      </div>
-    </dialog>
-
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="firebase-config.js?v=37"></script>
-    <script src="app.js?v=37"></script>
+    <script src="firebase-config.js?v=38"></script>
+    <script src="app.js?v=38"></script>
   </body>
 </html>

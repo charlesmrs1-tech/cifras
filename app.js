@@ -62,12 +62,8 @@ Temos todo o tempo do mundo`
   }
 ];
 
-const sampleSets = [];
 
 let state = loadState();
-if (Array.isArray(state.sets)) {
-  state.sets = state.sets.filter(s => s && s.name && normalize(s.name) !== "teste");
-}
 let currentSongId = null;
 let currentQueue = [];
 let editingSongId = null;
@@ -88,10 +84,7 @@ const el = {
   readerScreen: document.querySelector("#readerScreen"),
   quickSearch: document.querySelector("#quickSearch"),
   songList: document.querySelector("#songList"),
-  setList: document.querySelector("#setList"),
   songsPanel: document.querySelector("#songsPanel"),
-  setsPanel: document.querySelector("#setsPanel"),
-  tabs: document.querySelectorAll(".tab"),
   readerTitle: document.querySelector("#readerTitle"),
   readerMeta: document.querySelector("#readerMeta"),
   readerContent: document.querySelector("#readerContent"),
@@ -106,7 +99,6 @@ const el = {
   editSongButton: document.querySelector("#editSongButton"),
   directDeleteSongButton: document.querySelector("#directDeleteSongButton"),
   newSongButton: document.querySelector("#newSongButton"),
-  newSetButton: document.querySelector("#newSetButton"),
   searchDialog: document.querySelector("#searchDialog"),
   modalSearchInput: document.querySelector("#modalSearchInput"),
   modalSearchResults: document.querySelector("#modalSearchResults"),
@@ -117,13 +109,7 @@ const el = {
   songTitleInput: document.querySelector("#songTitleInput"),
   songStyleInput: document.querySelector("#songStyleInput"),
   songContentInput: document.querySelector("#songContentInput"),
-  deleteSongButton: document.querySelector("#deleteSongButton"),
-  setDialog: document.querySelector("#setDialog"),
-  closeSetDialogButton: document.querySelector("#closeSetDialogButton"),
-  saveSetButton: document.querySelector("#saveSetButton"),
-  clearAllSetsButton: document.querySelector("#clearAllSetsButton"),
-  setNameInput: document.querySelector("#setNameInput"),
-  setSongChoices: document.querySelector("#setSongChoices")
+  deleteSongButton: document.querySelector("#deleteSongButton")
 };
 
 function updateSyncStatus(text, statusClass = "") {
@@ -140,7 +126,6 @@ function loadState() {
       if (parsed && typeof parsed === "object") {
         return {
           songs: Array.isArray(parsed.songs) ? parsed.songs : sampleSongs,
-          sets: Array.isArray(parsed.sets) ? parsed.sets : [],
           readerSize: typeof parsed.readerSize === "number" ? parsed.readerSize : 24,
           scrollSpeed: typeof parsed.scrollSpeed === "number" ? parsed.scrollSpeed : 1
         };
@@ -150,7 +135,7 @@ function loadState() {
     }
   }
 
-  return { songs: sampleSongs, sets: [], readerSize: 24, scrollSpeed: 1 };
+  return { songs: sampleSongs, readerSize: 24, scrollSpeed: 1 };
 }
 
 function deduplicateSongs(songsList) {
@@ -172,11 +157,9 @@ function deduplicateSongs(songsList) {
 
 function saveState() {
   state.songs = deduplicateSongs(state.songs);
-  state.sets = deduplicateSets(state.sets);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   if (window.firebaseInitialized && window.db) {
     window.db.ref("repertoire/songs").set(state.songs.length ? state.songs : null);
-    window.db.ref("repertoire/sets").set(state.sets.length ? state.sets : null);
     window.db.ref("repertoire/updatedAt").set(new Date().toISOString()).then(() => {
       updateSyncStatus("🟢 Nuvem ativa", "online");
     }).catch(err => {
@@ -192,20 +175,6 @@ function toArray(val) {
   return [];
 }
 
-function deduplicateSets(setsList) {
-  const sets = toArray(setsList);
-  const seen = new Set();
-  const result = [];
-  for (const set of sets) {
-    if (!set || !set.name) continue;
-    const nameKey = normalize(set.name.trim());
-    if (!seen.has(nameKey)) {
-      seen.add(nameKey);
-      result.push(set);
-    }
-  }
-  return result;
-}
 
 function setupCloudSync() {
   const isCloudReady = typeof initFirebase === "function" && initFirebase();
@@ -228,11 +197,8 @@ function setupCloudSync() {
     if (remoteData !== null && typeof remoteData === "object") {
       const rawSongs = toArray(remoteData.songs);
       const cleanSongs = deduplicateSongs(rawSongs);
-      const rawSets = toArray(remoteData.sets);
-      const cleanSets = deduplicateSets(rawSets);
 
       state.songs = cleanSongs;
-      state.sets = cleanSets;
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       renderHome();
@@ -262,14 +228,11 @@ function escapeHtml(str) {
 function filteredSongs(query = el.quickSearch.value) {
   const needle = normalize(query.trim());
   return [...state.songs]
-    .sort((a, b) => a.title.localeCompare(b.title, "pt-BR"))
     .filter(song => !needle || normalize(`${song.title} ${song.style}`).includes(needle));
 }
 
 function renderHome() {
-  state.scrollSpeed ??= 1;
   renderSongs();
-  renderSets();
   document.documentElement.style.setProperty("--reader-size", `${state.readerSize}px`);
   renderScrollControls();
   el.backButton.style.visibility = currentSongId ? "visible" : "hidden";
@@ -284,7 +247,7 @@ function renderSongs() {
           <strong>${escapeHtml(song.title)}</strong>
           <span>${escapeHtml(song.style || "Sem estilo")} · toque para abrir</span>
         </button>
-        <button type="button" class="btn-delete-set" onclick="window.deleteSongDirect('${song.id}', event)">Excluir</button>
+        <button type="button" class="btn-delete-item" onclick="window.deleteSongDirect('${song.id}', event)">Excluir</button>
       </div>
     `).join("")
     : `<p class="reader-meta">Nenhuma música encontrada.</p>`;
@@ -305,77 +268,6 @@ function deleteSongDirect(songId, event) {
 
 window.deleteSongDirect = deleteSongDirect;
 
-function renderSets() {
-  const sets = Array.isArray(state.sets) ? state.sets : [];
-  const validSongs = Array.isArray(state.songs) ? state.songs : [];
-
-  sets.forEach((set, index) => {
-    if (!set.id) set.id = "set-" + index + "-" + Date.now();
-  });
-
-  el.setList.innerHTML = sets.length
-    ? sets.map((set, index) => {
-      const songIds = Array.isArray(set?.songIds) ? set.songIds : [];
-      const songTitles = Array.isArray(set?.songTitles) ? set.songTitles : [];
-      
-      const count = validSongs.filter(song =>
-        songIds.includes(song.id) || songTitles.includes(normalize(song.title))
-      ).length;
-
-      return `
-        <div class="set-card-item">
-          <button class="set-card" data-set-id="${set.id}">
-            <strong>${escapeHtml(set.name)}</strong>
-            <span>${count} musica${count === 1 ? "" : "s"} na sequência</span>
-          </button>
-          <button type="button" class="btn-delete-set" onclick="window.deleteSetDirect('${set.id}', event)">Excluir</button>
-        </div>
-      `;
-    }).join("")
-    : `<p class="reader-meta">Crie uma sequência para tocar por estilo ou ocasião.</p>`;
-}
-
-function deleteSet(setIdOrName, event) {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  const targetStr = String(setIdOrName || "").trim();
-  const targetNorm = normalize(targetStr);
-
-  state.sets = state.sets.filter(s => {
-    if (!s) return false;
-    const sId = String(s.id || "").trim();
-    const sName = normalize(s.name || "");
-    if (sId === targetStr || sName === targetNorm) return false;
-    return true;
-  });
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  renderHome();
-
-  if (window.firebaseInitialized && window.db) {
-    const setsRef = window.db.ref("repertoire/sets");
-    setsRef.remove().then(() => {
-      if (state.sets.length > 0) {
-        setsRef.set(state.sets);
-      }
-    });
-  }
-}
-
-window.deleteSetDirect = deleteSet;
-
-function clearAllSets() {
-  state.sets = [];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  renderHome();
-  if (window.firebaseInitialized && window.db) {
-    window.db.ref("repertoire/sets").remove();
-  }
-}
-window.clearAllSets = clearAllSets;
 
 function openReader(songId, queue = state.songs.map(song => song.id)) {
   const song = state.songs.find(item => item.id === songId);
@@ -608,70 +500,12 @@ function deleteSong(event) {
   deleteSongByIdOrTitle(idToDelete);
 }
 
-function openSetEditor() {
-  el.setNameInput.value = "";
-  el.setSongChoices.innerHTML = state.songs
-    .sort((a, b) => a.title.localeCompare(b.title, "pt-BR"))
-    .map(song => `
-      <label class="choice-item">
-        <input type="checkbox" value="${song.id}">
-        <span class="choice-title">${escapeHtml(song.title)}</span>
-        <span class="choice-style">${escapeHtml(song.style || "Sem estilo")}</span>
-      </label>
-    `).join("");
-  el.setDialog.showModal();
-}
-
-function switchTab(tabName) {
-  el.tabs.forEach(item => item.classList.toggle("active", item.dataset.tab === tabName));
-  el.songsPanel.classList.toggle("active", tabName === "songs");
-  el.setsPanel.classList.toggle("active", tabName === "sets");
-}
-
-function saveSet(event) {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-  const name = el.setNameInput.value.trim();
-  if (!name) {
-    alert("Por favor, digite um nome para a sequência.");
-    if (el.setNameInput) el.setNameInput.focus();
-    return;
-  }
-
-  const selectedInputs = [...el.setSongChoices.querySelectorAll("input:checked")];
-  const songIds = selectedInputs.map(input => input.value);
-  const songTitles = selectedInputs.map(input => {
-    const song = state.songs.find(s => s.id === input.value);
-    return song ? normalize(song.title) : "";
-  }).filter(Boolean);
-
-  const newSet = {
-    id: generateId(),
-    name,
-    songIds,
-    songTitles,
-    createdAt: new Date().toISOString()
-  };
-
-  if (!Array.isArray(state.sets)) state.sets = [];
-  state.sets.unshift(newSet);
-  
-  saveState();
-  if (el.setDialog.open) el.setDialog.close();
-  switchTab("sets");
-  renderHome();
-  alert(`Sequência "${name}" salva com sucesso!`);
-}
-
 function exportRepertoire() {
   const data = {
     app: "cifras-charles",
     version: 1,
     exportedAt: new Date().toISOString(),
-    songs: state.songs,
-    sets: state.sets
+    songs: state.songs
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -711,16 +545,10 @@ function sanitizeImportedRepertoire(data) {
   }
 
   const songIds = new Set(songs.map(song => song.id));
-  const sets = Array.isArray(data.sets) ? data.sets.map(set => ({
-    id: typeof set.id === "string" && set.id.trim() ? set.id : crypto.randomUUID(),
-    name: String(set.name || "").trim(),
-    songIds: Array.isArray(set.songIds) ? set.songIds.filter(id => songIds.has(id)) : []
-  })).filter(set => set.name && set.songIds.length) : [];
 
   return {
     ...state,
-    songs,
-    sets
+    songs
   };
 }
 
@@ -761,29 +589,168 @@ el.fullscreenButton.addEventListener("click", () => {
   else document.exitFullscreen?.();
 });
 
+let didDrag = false;
+
 el.songList.addEventListener("click", event => {
+  if (didDrag) {
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
   const card = event.target.closest("[data-song-id]");
   if (card) openReader(card.dataset.songId, filteredSongs().map(song => song.id));
 });
 
-el.setList.addEventListener("click", event => {
-  const deleteBtn = event.target.closest("[data-delete-set-id]");
-  if (deleteBtn) {
-    event.preventDefault();
-    event.stopPropagation();
-    deleteSet(deleteBtn.dataset.deleteSetId, event);
+let dragTimer = null;
+let dragElement = null;
+let dragStartIndex = -1;
+let dragStartY = 0;
+let isDragging = false;
+let dragPlaceholder = null;
+
+function handleDragStart(e, target) {
+  didDrag = false;
+  if (isDragging || (e.button !== undefined && e.button !== 0)) return;
+  
+  const item = target.closest(".song-card-item");
+  if (!item) return;
+
+  const button = target.closest("button:not(.song-card)");
+  if (button) return; 
+
+  dragTimer = setTimeout(() => {
+    isDragging = true;
+    didDrag = true;
+    dragElement = item;
+    
+    if (el.quickSearch.value.trim()) {
+       isDragging = false;
+       return;
+    }
+    
+    const allItems = [...el.songList.querySelectorAll('.song-card-item')];
+    dragStartIndex = allItems.indexOf(item);
+    
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    dragStartY = clientY;
+    
+    const rect = item.getBoundingClientRect();
+    
+    dragPlaceholder = document.createElement('div');
+    dragPlaceholder.className = 'song-card-item drag-placeholder';
+    dragPlaceholder.style.height = rect.height + 'px';
+    dragPlaceholder.style.border = '2px dashed var(--muted)';
+    dragPlaceholder.style.borderRadius = '12px';
+    dragPlaceholder.style.margin = '4px 0';
+    
+    item.parentNode.insertBefore(dragPlaceholder, item);
+    
+    item.classList.add('dragging');
+    item.style.position = 'absolute';
+    item.style.top = item.offsetTop + 'px';
+    item.style.left = item.offsetLeft + 'px';
+    item.style.width = item.offsetWidth + 'px';
+    item.style.zIndex = '1000';
+    item.style.margin = '0';
+    
+    if(navigator.vibrate) navigator.vibrate(50);
+  }, 400); 
+}
+
+function handleDragMove(e) {
+  if (!isDragging || !dragElement) {
+    if (dragTimer) {
+       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+       if (dragStartY && Math.abs(clientY - dragStartY) > 10) {
+           clearTimeout(dragTimer);
+           dragTimer = null;
+       }
+    }
     return;
   }
+  
+  if (e.cancelable) e.preventDefault(); 
+  
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  const deltaY = clientY - dragStartY;
+  dragElement.style.transform = `translateY(${deltaY}px)`;
 
-  const card = event.target.closest("[data-set-id]");
-  if (card) {
-    const set = state.sets.find(item => item.id === card.dataset.setId);
-    if (set) {
-      const queueSongs = Array.isArray(set.songIds) && set.songIds.length ? set.songIds : state.songs.map(s => s.id);
-      openReader(queueSongs[0], queueSongs);
+  const allItems = [...el.songList.querySelectorAll('.song-card-item:not(.dragging)')];
+  let hoverElement = null;
+  
+  for (const item of allItems) {
+    if (item === dragPlaceholder) continue;
+    const rect = item.getBoundingClientRect();
+    if (clientY > rect.top && clientY < rect.bottom) {
+      hoverElement = item;
+      break;
     }
   }
+
+  if (hoverElement) {
+    const rect = hoverElement.getBoundingClientRect();
+    const isAfter = clientY > rect.top + rect.height / 2;
+    if (isAfter) {
+      hoverElement.parentNode.insertBefore(dragPlaceholder, hoverElement.nextSibling);
+    } else {
+      hoverElement.parentNode.insertBefore(dragPlaceholder, hoverElement);
+    }
+  }
+}
+
+function handleDragEnd(e) {
+  if (dragTimer) {
+    clearTimeout(dragTimer);
+    dragTimer = null;
+  }
+  
+  if (!isDragging) return;
+  
+  isDragging = false;
+  dragElement.classList.remove('dragging');
+  dragElement.style.position = '';
+  dragElement.style.top = '';
+  dragElement.style.left = '';
+  dragElement.style.width = '';
+  dragElement.style.transform = '';
+  dragElement.style.zIndex = '';
+  dragElement.style.margin = '';
+  
+  if (dragPlaceholder && dragPlaceholder.parentNode) {
+    dragPlaceholder.parentNode.insertBefore(dragElement, dragPlaceholder);
+    dragPlaceholder.parentNode.removeChild(dragPlaceholder);
+  }
+  dragPlaceholder = null;
+  
+  const allItems = [...el.songList.querySelectorAll('.song-card-item')];
+  const endIndex = allItems.indexOf(dragElement);
+  
+  if (dragStartIndex !== -1 && endIndex !== -1 && dragStartIndex !== endIndex) {
+    const movedItem = state.songs.splice(dragStartIndex, 1)[0];
+    state.songs.splice(endIndex, 0, movedItem);
+    saveState();
+  }
+  
+  dragStartIndex = -1;
+  dragElement = null;
+  
+  setTimeout(() => didDrag = false, 50);
+}
+
+el.songList.addEventListener("mousedown", e => {
+  dragStartY = e.clientY;
+  handleDragStart(e, e.target);
 });
+el.songList.addEventListener("touchstart", e => {
+  dragStartY = e.touches[0].clientY;
+  handleDragStart(e, e.target);
+}, {passive: true});
+
+window.addEventListener("mousemove", handleDragMove, {passive: false});
+window.addEventListener("touchmove", handleDragMove, {passive: false});
+
+window.addEventListener("mouseup", handleDragEnd);
+window.addEventListener("touchend", handleDragEnd);
 
 el.modalSearchResults.addEventListener("click", event => {
   const card = event.target.closest("[data-song-id]");
@@ -792,8 +759,6 @@ el.modalSearchResults.addEventListener("click", event => {
     openReader(card.dataset.songId, filteredSongs(el.modalSearchInput.value).map(song => song.id));
   }
 });
-
-el.tabs.forEach(tab => tab.addEventListener("click", () => switchTab(tab.dataset.tab)));
 
 el.prevSongButton.addEventListener("click", () => moveInQueue(-1));
 el.nextSongButton.addEventListener("click", () => moveInQueue(1));
@@ -805,12 +770,8 @@ el.scrollFasterButton.addEventListener("click", () => changeScrollSpeed(1));
 el.editSongButton.addEventListener("click", () => openSongEditor(currentSongId));
 el.directDeleteSongButton.addEventListener("click", () => deleteSongByIdOrTitle(currentSongId));
 el.newSongButton.addEventListener("click", () => openSongEditor());
-el.newSetButton.addEventListener("click", openSetEditor);
-el.clearAllSetsButton?.addEventListener("click", clearAllSets);
 el.saveSongButton.addEventListener("click", saveSong);
 el.deleteSongButton.addEventListener("click", deleteSong);
-el.saveSetButton.addEventListener("click", saveSet);
-el.closeSetDialogButton.addEventListener("click", () => el.setDialog.close());
 
 let pinchStartDistance = 0;
 el.readerContent.addEventListener("touchstart", event => {
