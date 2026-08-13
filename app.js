@@ -274,14 +274,14 @@ function renderHome() {
   renderSets();
   document.documentElement.style.setProperty("--reader-size", `${state.readerSize}px`);
   renderScrollControls();
-  el.backButton.style.visibility = currentSongId ? "visible" : "hidden";
+  if (el.backButton) el.backButton.style.visibility = currentSongId ? "visible" : "hidden";
   
   // Controle de acesso aos botões principais
-  el.newSongButton.style.display = isAdmin ? "inline-flex" : "none";
+  if (el.newSongButton) el.newSongButton.style.display = isAdmin ? "inline-flex" : "none";
   if (el.newSetButton) el.newSetButton.style.display = isAdmin ? "inline-flex" : "none";
   if (el.clearAllSetsButton) el.clearAllSetsButton.style.display = isAdmin ? "inline-flex" : "none";
-  el.editSongButton.style.display = isAdmin ? "inline-flex" : "none";
-  el.directDeleteSongButton.style.display = isAdmin ? "inline-flex" : "none";
+  if (el.editSongButton) el.editSongButton.style.display = isAdmin ? "inline-flex" : "none";
+  if (el.directDeleteSongButton) el.directDeleteSongButton.style.display = isAdmin ? "inline-flex" : "none";
 }
 
 function renderSongs() {
@@ -321,6 +321,8 @@ function renderSets() {
   sets.forEach((set, index) => {
     if (!set.id) set.id = "set-" + index + "-" + Date.now();
   });
+
+  if (!el.setList) return;
 
   el.setList.innerHTML = sets.length
     ? sets.map((set, index) => {
