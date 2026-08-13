@@ -884,22 +884,22 @@ el.modalSearchResults.addEventListener("click", event => {
   }
 });
 
-el.prevSongButton.addEventListener("click", () => moveInQueue(-1));
-el.nextSongButton.addEventListener("click", () => moveInQueue(1));
-el.fontDownButton.addEventListener("click", () => changeFont(-2));
-el.fontUpButton.addEventListener("click", () => changeFont(2));
-el.scrollToggleButton.addEventListener("click", toggleAutoScroll);
-el.scrollSlowerButton.addEventListener("click", () => changeScrollSpeed(-1));
-el.scrollFasterButton.addEventListener("click", () => changeScrollSpeed(1));
-el.editSongButton.addEventListener("click", () => openSongEditor(currentSongId));
-el.directDeleteSongButton.addEventListener("click", () => deleteSongByIdOrTitle(currentSongId));
-el.newSongButton.addEventListener("click", () => openSongEditor());
-el.saveSongButton.addEventListener("click", saveSong);
-el.deleteSongButton.addEventListener("click", deleteSong);
+el.prevSongButton?.addEventListener("click", () => moveInQueue(-1));
+el.nextSongButton?.addEventListener("click", () => moveInQueue(1));
+el.fontDownButton?.addEventListener("click", () => changeFont(-2));
+el.fontUpButton?.addEventListener("click", () => changeFont(2));
+el.scrollToggleButton?.addEventListener("click", toggleAutoScroll);
+el.scrollSlowerButton?.addEventListener("click", () => changeScrollSpeed(-1));
+el.scrollFasterButton?.addEventListener("click", () => changeScrollSpeed(1));
+el.editSongButton?.addEventListener("click", () => openSongEditor(currentSongId));
+el.directDeleteSongButton?.addEventListener("click", () => deleteSongByIdOrTitle(currentSongId));
+el.newSongButton?.addEventListener("click", () => openSongEditor());
+el.saveSongButton?.addEventListener("click", saveSong);
+el.deleteSongButton?.addEventListener("click", deleteSong);
 
-el.setAvailableSearch.addEventListener("input", e => renderSetEditorLists(e.target.value));
+el.setAvailableSearch?.addEventListener("input", e => renderSetEditorLists(e.target.value));
 
-el.setList.addEventListener("click", event => {
+el.setList?.addEventListener("click", event => {
   const deleteBtn = event.target.closest(".btn-delete-item");
   if (deleteBtn) {
     return; // Os botões de excluir/editar usam onclick inline agora
@@ -919,18 +919,18 @@ el.setList.addEventListener("click", event => {
   }
 });
 
-el.tabs.forEach(tab => tab.addEventListener("click", () => switchTab(tab.dataset.tab)));
+el.tabs?.forEach(tab => tab.addEventListener("click", () => switchTab(tab.dataset.tab)));
 
-el.newSetButton.addEventListener("click", () => openSetEditor());
+el.newSetButton?.addEventListener("click", () => openSetEditor());
 el.clearAllSetsButton?.addEventListener("click", clearAllSets);
-el.saveSetButton.addEventListener("click", saveSet);
-el.closeSetDialogButton.addEventListener("click", () => el.setDialog.close());
+el.saveSetButton?.addEventListener("click", saveSet);
+el.closeSetDialogButton?.addEventListener("click", () => el.setDialog?.close());
 
-el.selectedSetSongsList.addEventListener("mousedown", e => {
+el.selectedSetSongsList?.addEventListener("mousedown", e => {
   setDragStartY = e.clientY;
   handleSetDragStart(e, e.target);
 });
-el.selectedSetSongsList.addEventListener("touchstart", e => {
+el.selectedSetSongsList?.addEventListener("touchstart", e => {
   setDragStartY = e.touches[0].clientY;
   handleSetDragStart(e, e.target);
 }, {passive: true});
