@@ -65,7 +65,7 @@ let state = loadState();
 let isAdmin = localStorage.getItem("isAdmin") === "true";
 
 if (Array.isArray(state.sets)) {
-  state.sets = state.sets.filter(s => s && s.name && normalize(s.name) !== "teste");
+  state.sets = state.sets.filter(s => s && s.name && normalize(String(s.name)) !== "teste");
 }
 let currentSongId = null;
 let currentQueue = [];
@@ -163,7 +163,7 @@ function deduplicateSongs(songsList) {
 
   for (const song of songsList) {
     if (!song || !song.title) continue;
-    const titleKey = normalize(song.title.trim());
+    const titleKey = normalize(String(song.title).trim());
     if (!seenTitles.has(titleKey)) {
       seenTitles.add(titleKey);
       uniqueSongs.push(song);
@@ -202,7 +202,7 @@ function deduplicateSets(setsList) {
   const result = [];
   for (const set of sets) {
     if (!set || !set.name) continue;
-    const nameKey = normalize(set.name.trim());
+    const nameKey = normalize(String(set.name).trim());
     if (!seen.has(nameKey)) {
       seen.add(nameKey);
       result.push(set);
@@ -249,8 +249,9 @@ function setupCloudSync() {
   });
 }
 
-function normalize(value) {
-  return String(value || "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+function normalize(str) {
+  if (str === null || str === undefined) return "";
+  return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
 function escapeHtml(str) {
