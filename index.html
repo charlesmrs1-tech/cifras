@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#10130f">
     <title>Músicas do Charles</title>
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="stylesheet" href="styles.css?v=41">
+    <link rel="stylesheet" href="styles.css?v=42">
     <script>
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
@@ -18,6 +18,19 @@
           for (let name of names) caches.delete(name);
         });
       }
+      
+      window.addEventListener('error', function(event) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style = 'position: fixed; top: 0; left: 0; right: 0; background: red; color: white; padding: 20px; z-index: 99999; font-size: 14px;';
+        errorDiv.textContent = 'Erro JS: ' + event.message + ' na linha ' + event.lineno;
+        document.body.appendChild(errorDiv);
+      });
+      window.addEventListener('unhandledrejection', function(event) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style = 'position: fixed; top: 0; left: 0; right: 0; background: red; color: white; padding: 20px; z-index: 99999; font-size: 14px;';
+        errorDiv.textContent = 'Rejeição JS: ' + event.reason;
+        document.body.appendChild(errorDiv);
+      });
     </script>
   </head>
   <body>
@@ -152,7 +165,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="firebase-config.js?v=41"></script>
-    <script src="app.js?v=41"></script>
+    <script src="firebase-config.js?v=42"></script>
+    <script src="app.js?v=42"></script>
   </body>
 </html>

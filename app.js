@@ -327,8 +327,8 @@ function renderSets() {
 
   el.setList.innerHTML = sets.length
     ? sets.map((set, index) => {
-      const songIds = Array.isArray(set?.songIds) ? set.songIds : [];
-      const songTitles = Array.isArray(set?.songTitles) ? set.songTitles : [];
+      const songIds = Array.isArray(set && set.songIds) ? set.songIds : [];
+      const songTitles = Array.isArray(set && set.songTitles) ? set.songTitles : [];
       
       const count = validSongs.filter(song =>
         songIds.includes(song.id) || songTitles.includes(normalize(song.title))
@@ -547,9 +547,9 @@ function openSongEditor(songId = null) {
   editingSongId = songId;
   const song = state.songs.find(item => item.id === songId);
   el.songDialogTitle.textContent = song ? "Editar música" : "Nova música";
-  el.songTitleInput.value = song?.title || "";
-  el.songStyleInput.value = song?.style || "";
-  el.songContentInput.value = song?.content || "";
+  el.songTitleInput.value = (song && song.title) ? song.title : "";
+  el.songStyleInput.value = (song && song.style) ? song.style : "";
+  el.songContentInput.value = (song && song.content) ? song.content : "";
   el.deleteSongButton.hidden = !song;
   el.songDialog.showModal();
 }
@@ -711,8 +711,11 @@ el.floatingSearchButton.addEventListener("click", openSearch);
 el.modalSearchInput.addEventListener("input", renderSearchResults);
 el.backButton.addEventListener("click", closeReader);
 el.fullscreenButton.addEventListener("click", () => {
-  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
-  else document.exitFullscreen?.();
+  if (!document.fullscreenElement) {
+    if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+  } else {
+    if (document.exitFullscreen) document.exitFullscreen();
+  }
 });
 
 let didDrag = false;
@@ -887,56 +890,57 @@ el.modalSearchResults.addEventListener("click", event => {
   }
 });
 
-el.prevSongButton?.addEventListener("click", () => moveInQueue(-1));
-el.nextSongButton?.addEventListener("click", () => moveInQueue(1));
-el.fontDownButton?.addEventListener("click", () => changeFont(-2));
-el.fontUpButton?.addEventListener("click", () => changeFont(2));
-el.scrollToggleButton?.addEventListener("click", toggleAutoScroll);
-el.scrollSlowerButton?.addEventListener("click", () => changeScrollSpeed(-1));
-el.scrollFasterButton?.addEventListener("click", () => changeScrollSpeed(1));
-el.editSongButton?.addEventListener("click", () => openSongEditor(currentSongId));
-el.directDeleteSongButton?.addEventListener("click", () => deleteSongByIdOrTitle(currentSongId));
-el.newSongButton?.addEventListener("click", () => openSongEditor());
-el.saveSongButton?.addEventListener("click", saveSong);
-el.deleteSongButton?.addEventListener("click", deleteSong);
+if (el.prevSongButton) el.prevSongButton.addEventListener("click", () => moveInQueue(-1));
+if (el.nextSongButton) el.nextSongButton.addEventListener("click", () => moveInQueue(1));
+if (el.fontDownButton) el.fontDownButton.addEventListener("click", () => changeFont(-2));
+if (el.fontUpButton) el.fontUpButton.addEventListener("click", () => changeFont(2));
+if (el.scrollToggleButton) el.scrollToggleButton.addEventListener("click", toggleAutoScroll);
+if (el.scrollSlowerButton) el.scrollSlowerButton.addEventListener("click", () => changeScrollSpeed(-1));
+if (el.scrollFasterButton) el.scrollFasterButton.addEventListener("click", () => changeScrollSpeed(1));
+if (el.editSongButton) el.editSongButton.addEventListener("click", () => openSongEditor(currentSongId));
+if (el.directDeleteSongButton) el.directDeleteSongButton.addEventListener("click", () => deleteSongByIdOrTitle(currentSongId));
+if (el.newSongButton) el.newSongButton.addEventListener("click", () => openSongEditor());
+if (el.saveSongButton) el.saveSongButton.addEventListener("click", saveSong);
+if (el.deleteSongButton) el.deleteSongButton.addEventListener("click", deleteSong);
 
-el.setAvailableSearch?.addEventListener("input", e => renderSetEditorLists(e.target.value));
+if (el.setAvailableSearch) el.setAvailableSearch.addEventListener("input", e => renderSetEditorLists(e.target.value));
 
-el.setList?.addEventListener("click", event => {
-  const deleteBtn = event.target.closest(".btn-delete-item");
-  if (deleteBtn) {
-    return; // Os botões de excluir/editar usam onclick inline agora
-  }
-
-  const card = event.target.closest("[data-set-id]");
-  if (card) {
-    const set = state.sets.find(item => item.id === card.dataset.setId);
-    if (set) {
-      const queueSongs = Array.isArray(set.songIds) && set.songIds.length ? set.songIds : [];
-      if (queueSongs.length > 0) {
-        openReader(queueSongs[0], queueSongs);
-      } else {
-        alert("Esta sequência não possui músicas adicionadas.");
+if (el.setList) {
+  el.setList.addEventListener("click", event => {
+    const deleteBtn = event.target.closest(".btn-delete-item");
+    if (deleteBtn) return;
+  
+    const card = event.target.closest("[data-set-id]");
+    if (card) {
+      const set = state.sets.find(item => item.id === card.dataset.setId);
+      if (set) {
+        const queueSongs = Array.isArray(set.songIds) && set.songIds.length ? set.songIds : [];
+        if (queueSongs.length > 0) openReader(queueSongs[0], queueSongs);
+        else alert("Esta sequência não possui músicas adicionadas.");
       }
     }
-  }
+  });
+}
+
+if (el.tabs) el.tabs.forEach(tab => tab.addEventListener("click", () => switchTab(tab.dataset.tab)));
+
+if (el.newSetButton) el.newSetButton.addEventListener("click", () => openSetEditor());
+if (el.clearAllSetsButton) el.clearAllSetsButton.addEventListener("click", clearAllSets);
+if (el.saveSetButton) el.saveSetButton.addEventListener("click", saveSet);
+if (el.closeSetDialogButton) el.closeSetDialogButton.addEventListener("click", () => {
+  if (el.setDialog) el.setDialog.close();
 });
 
-el.tabs?.forEach(tab => tab.addEventListener("click", () => switchTab(tab.dataset.tab)));
-
-el.newSetButton?.addEventListener("click", () => openSetEditor());
-el.clearAllSetsButton?.addEventListener("click", clearAllSets);
-el.saveSetButton?.addEventListener("click", saveSet);
-el.closeSetDialogButton?.addEventListener("click", () => el.setDialog?.close());
-
-el.selectedSetSongsList?.addEventListener("mousedown", e => {
-  setDragStartY = e.clientY;
-  handleSetDragStart(e, e.target);
-});
-el.selectedSetSongsList?.addEventListener("touchstart", e => {
-  setDragStartY = e.touches[0].clientY;
-  handleSetDragStart(e, e.target);
-}, {passive: true});
+if (el.selectedSetSongsList) {
+  el.selectedSetSongsList.addEventListener("mousedown", e => {
+    setDragStartY = e.clientY;
+    handleSetDragStart(e, e.target);
+  });
+  el.selectedSetSongsList.addEventListener("touchstart", e => {
+    setDragStartY = e.touches[0].clientY;
+    handleSetDragStart(e, e.target);
+  }, {passive: true});
+}
 
 window.addEventListener("mousemove", handleSetDragMove, {passive: false});
 window.addEventListener("touchmove", handleSetDragMove, {passive: false});
