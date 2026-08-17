@@ -626,6 +626,96 @@ function deleteSong(event) {
   deleteSongByIdOrTitle(idToDelete);
 }
 
+let editingSetId = null;
+
+function openSetEditor(setId = null) {
+  editingSetId = setId;
+  const set = state.sets.find(item => item.id === setId);
+  el.setDialogTitle.textContent = set ? "Editar sequência" : "Criar sequência";
+  el.setNameInput.value = set ? set.name : "";
+  el.setAvailableSearch.value = "";
+  
+  if (set) {
+    el.selectedSetSongsList.innerHTML = (set.songIds || []).map(id => {
+      const song = state.songs.find(s => s.id === id);
+      if (!song) return "";
+      return `
+        <div class="set-song-item" data-song-id="${song.id}">
+          <span>${escapeHtml(song.title)}</span>
+          <button type="button" class="btn-delete-item" onclick="this.parentElement.remove()">×</button>
+        </div>
+      `;
+    }).join("");
+  } else {
+    el.selectedSetSongsList.innerHTML = "";
+  }
+  
+  renderSetEditorLists();
+  el.setDialog.showModal();
+}
+
+function saveSet() {
+  const name = el.setNameInput.value.trim();
+  if (!name) { alert("Dê um nome para a sequência!"); return; }
+  
+  const songIds = Array.from(el.selectedSetSongsList.querySelectorAll(".set-song-item"))
+                       .map(item => item.dataset.songId);
+                       
+  if (editingSetId) {
+    const set = state.sets.find(s => s.id === editingSetId);
+    if (set) {
+      set.name = name;
+      set.songIds = songIds;
+    }
+  } else {
+    state.sets.push({
+      id: generateId(),
+      name: name,
+      songIds: songIds
+    });
+  }
+  
+  if (el.setDialog) el.setDialog.close();
+  saveState();
+  renderSets();
+}
+
+function clearAllSets() {
+  if (confirm("Tem certeza que deseja excluir TODAS as sequências?")) {
+    state.sets = [];
+    saveState();
+    renderSets();
+  }
+}
+
+window.addSongToSet = function(songId) {
+  const song = state.songs.find(s => s.id === songId);
+  if (!song) return;
+  
+  const div = document.createElement("div");
+  div.className = "set-song-item";
+  div.dataset.songId = song.id;
+  div.innerHTML = `
+    <span>${escapeHtml(song.title)}</span>
+    <button type="button" class="btn-delete-item" onclick="this.parentElement.remove()">×</button>
+  `;
+  el.selectedSetSongsList.appendChild(div);
+};
+
+function renderSetEditorLists(filter = "") {
+  const term = normalize(filter);
+  const availableSongs = state.songs.filter(song => {
+    return !term || normalize(song.title).includes(term) || normalize(song.style).includes(term);
+  });
+  
+  el.availableSetSongsList.innerHTML = availableSongs.map(song => `
+    <div class="set-song-item" style="cursor: default;">
+      <span style="flex:1">${escapeHtml(song.title)} <small style="color:var(--muted)">${escapeHtml(song.style || '')}</small></span>
+      <button type="button" class="primary-button" style="padding: 4px 8px; font-size: 12px; margin-left: 8px;" onclick="addSongToSet('${song.id}')">Adicionar</button>
+    </div>
+  `).join("");
+}
+
 function exportRepertoire() {
   const data = {
     app: "cifras-charles",
